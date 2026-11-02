@@ -1,0 +1,54 @@
+.site-header {
+  background: #ffffff;
+  border-bottom: 1px solid #d5dce5;
+}
+
+.site-nav {
+  width: min(1240px, 100%);
+  min-height: 80px;
+  margin-inline: auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.site-brand {
+  color: #182435;
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.site-brand span {
+  color: #5c1852;
+}
+
+.site-nav__link {
+  color: #35445a;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-nav__link:hover {
+  color: #5c1852;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+@media (max-width: 600px) {
+  .site-nav {
+    min-height: 68px;
+    padding-inline: 16px;
+  }
+
+  .site-brand {
+    font-size: 1.4rem;
+  }
+
+  .site-nav__link {
+    font-size: 0.9rem;
+  }
+}
