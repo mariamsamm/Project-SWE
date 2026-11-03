@@ -99,3 +99,21 @@
 .ticket-dialog__actions {
   justify-content: flex-end;
 }
+
+.ticket-result {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #dff3e4;
+  color: #14532d;
+}
+
+.ticket-result p {
+  margin: 4px 0 8px;
+}
+
+.ticket-dialog .account-form {
+  margin: 12px 0;
+  padding: 0;
+  box-shadow: none;
+}

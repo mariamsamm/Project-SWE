@@ -1,0 +1,284 @@
+.account-page {
+  width: min(480px, calc(100% - 32px));
+  margin: 32px auto 64px;
+}
+
+.account-page--wide {
+  width: min(760px, calc(100% - 32px));
+}
+
+.account-page h1 {
+  margin: 8px 0 8px;
+  font-family: Georgia, serif;
+}
+
+.account-page__intro,
+.account-page__switch {
+  color: #536174;
+}
+
+.account-form {
+  display: grid;
+  gap: 6px;
+  margin: 20px 0;
+  padding: 24px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(24 36 53 / 8%);
+}
+
+.account-form label {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.account-form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #8794a6;
+  border-radius: 8px;
+  background: #fff;
+  color: #182435;
+}
+
+.account-form input[aria-invalid="true"] {
+  border-color: #b3261e;
+}
+
+.field-error,
+.form-alert {
+  margin: 0;
+  color: #b3261e;
+  font-size: 0.92rem;
+}
+
+.form-alert {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fdecea;
+}
+
+.field-hint {
+  margin: 0;
+  color: #536174;
+  font-size: 0.88rem;
+}
+
+.account-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  border: 0;
+  background: #ffcf70;
+  color: #182435;
+}
+
+.btn-secondary {
+  border: 1px solid #8794a6;
+  background: #fff;
+  color: #182435;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.demo-hint {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px dashed #8794a6;
+  border-radius: 12px;
+  font-size: 0.92rem;
+}
+
+.demo-hint small {
+  color: #536174;
+}
+
+/* status badge */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-badge--confirmed {
+  background: #dff3e4;
+  color: #14532d;
+}
+
+.status-badge--pending {
+  background: #fff1cc;
+  color: #6b4700;
+}
+
+.status-badge--rejected {
+  background: #fdecea;
+  color: #8c1d18;
+}
+
+/* registrations */
+.registration-list {
+  display: grid;
+  gap: 16px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.registration-card,
+.ticket-card,
+.empty-state {
+  padding: 20px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(24 36 53 / 8%);
+}
+
+.registration-card__top,
+.ticket-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.registration-card h2,
+.ticket-card h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.registration-card__meta,
+.registration-card__note {
+  color: #536174;
+}
+
+.registration-card__items {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.registration-card__total {
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+/* ticket */
+.ticket-card {
+  margin-top: 16px;
+}
+
+.ticket-card__details {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 16px 0;
+}
+
+.ticket-card__details dt {
+  color: #536174;
+}
+
+.ticket-card__details dd {
+  margin: 0;
+}
+
+.ticket-card__code {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 2px dashed #d5dce5;
+}
+
+.qr-code {
+  width: min(240px, 100%);
+}
+
+.qr-code svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ticket-code {
+  margin: 0;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.ticket-card__admits {
+  margin: 0 0 8px;
+  color: #536174;
+}
+
+@media print {
+  .site-header,
+  .account-page > a,
+  .btn-secondary {
+    display: none;
+  }
+}
+
+.account-dialog {
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 24px;
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  color: #182435;
+}
+
+.account-dialog::backdrop {
+  background: rgb(24 36 53 / 58%);
+}
+
+.account-dialog main {
+  width: 100%;
+  margin: 0;
+  padding: 16px 0 0;
+}
+
+.account-dialog main h1 {
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+}
+
+.account-dialog .account-form {
+  margin-inline: 0;
+  padding: 0;
+  box-shadow: none;
+}
