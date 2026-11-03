@@ -20,6 +20,13 @@ function EventCard({ event }) {
 
       <div className="event-card__content">
         <h3>{event.title}</h3>
+        <a
+  className="event-card__action"
+  href={`/?event=${encodeURIComponent(event.id)}`}
+  aria-label={`View tickets for ${event.title}`}
+>
+  View tickets
+</a>
 
         <time dateTime={event.startDate}>
           {formattedDate} · Cairo time

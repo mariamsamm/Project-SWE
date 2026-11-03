@@ -1,0 +1,101 @@
+.ticket-booking {
+  margin-top: 28px;
+  border-top: 1px solid #d5dce5;
+  padding-top: 16px;
+}
+
+.ticket-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #d5dce5;
+}
+
+.ticket-option p {
+  margin: 5px 0 0;
+  color: #536174;
+}
+
+.ticket-stepper,
+.ticket-dialog__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticket-stepper output {
+  min-width: 2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-stepper button,
+.ticket-dialog__actions button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #8794a6;
+  border-radius: 8px;
+  background: white;
+  color: #182435;
+  cursor: pointer;
+}
+
+.ticket-booking .ticket-primary {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #ffcf70;
+  color: #182435;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ticket-booking button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ticket-total {
+  font-weight: 700;
+}
+
+.ticket-dialog {
+  width: min(420px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  padding: 28px;
+  border: 0;
+  border-radius: 16px;
+  color: #182435;
+}
+
+.ticket-dialog::backdrop {
+  background: rgb(24 36 53 / 60%);
+}
+
+.ticket-dialog h2 {
+  margin-top: 0;
+}
+
+.ticket-dialog label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.ticket-dialog input {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border: 1px solid #8794a6;
+  border-radius: 8px;
+}
+
+.ticket-dialog__actions {
+  justify-content: flex-end;
+}

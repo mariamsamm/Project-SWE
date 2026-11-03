@@ -9,7 +9,12 @@ export const events = [
     capacity: 200,
     approvalMode: "MANUAL",
     imageUrl: "/images/christmas.jpg",
+    ticketCategories: [
+      { id: "general", name: "General Admission", price: 150, available: 160 },
+      { id: "vip", name: "VIP", price: 300, available: 40 },
+    ],
   },
+  
   {
     id: 2,
     title: "Web Development Workshop",
@@ -19,7 +24,11 @@ export const events = [
     location: "Computer Lab",
     capacity: 30,
     approvalMode: "AUTOMATIC",
-    imageUrl: "/images/workshop.jpg"
+    imageUrl: "/images/workshop.jpg",
+    ticketCategories: [
+      { id: "student", name: "Student Admission", price: 75, available: 20 },
+      { id: "standard", name: "Standard Admission", price: 120, available: 10 },
+    ],
   },
   {
     id: 3,
@@ -30,6 +39,10 @@ export const events = [
     location: "University Sports Courts",
     capacity: 100,
     approvalMode: "AUTOMATIC",
-    imageUrl: "/images/sports1.jpg"
+    imageUrl: "/images/sports1.jpg",
+    ticketCategories: [
+      { id: "general", name: "General Admission", price: 80, available: 80 },
+      { id: "premium", name: "Premium Seating", price: 160, available: 20 },
+    ],
   },
 ]
