@@ -452,3 +452,23 @@ main > p {
     padding: 18px;
   }
 }
+.page-back {
+  width: min(1192px, calc(100% - 32px));
+  margin: 16px auto 0;
+}
+
+.page-back button {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid #d5dce5;
+  border-radius: 999px;
+  background: #fff;
+  color: #182435;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.page-back button:hover {
+  background: #fff0cf;
+}
