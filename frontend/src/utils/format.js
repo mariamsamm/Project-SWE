@@ -19,4 +19,7 @@ export const STATUS_LABELS = {
   CONFIRMED: "Confirmed",
   PENDING: "Awaiting approval",
   REJECTED: "Rejected",
+  DRAFT: "Draft",
+  PENDING_REVIEW: "Pending review",
+  PUBLISHED: "Published",
 }
