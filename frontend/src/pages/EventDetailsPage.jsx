@@ -34,8 +34,7 @@ function EventDetailsPage({ eventId }) {
 
   return (
     <main className="event-details">
-      <a href="/#upcoming-events">← Back to events</a>
-
+        
       {loading && <p role="status">Loading event…</p>}
       {error && <p role="alert">{error}</p>}
       {!loading && !error && !event && <h1>Event not found</h1>}

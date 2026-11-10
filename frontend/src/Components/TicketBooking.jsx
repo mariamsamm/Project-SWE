@@ -1,22 +1,30 @@
 import { useRef, useState } from "react"
+import LoginForm from "./LoginForm"
+import { useSession } from "../hooks/useSession"
+import {
+  MAX_TICKETS_PER_BOOKING,
+  createRegistration,
+  getBookedCounts,
+} from "../services/registrationService"
+import { formatPrice } from "../utils/format"
+import { pageUrl } from "../utils/navigation"
 import "./TicketBooking.css"
-
-const demoSessionKey = "eventhub-demo-session"
-
-const formatPrice = new Intl.NumberFormat("en-EG", {
-  style: "currency",
-  currency: "EGP",
-}).format
 
 function TicketBooking({ event }) {
   const categories = event.ticketCategories ?? []
-  console.log("TicketBooking received:", event.title, event.ticketCategories)
+  const session = useSession()
+
   const [quantities, setQuantities] = useState({})
-  const [signedIn, setSignedIn] = useState(
-    () => sessionStorage.getItem(demoSessionKey) === "true"
-  )
-  const [message, setMessage] = useState("")
+  const [booked, setBooked] = useState(() => getBookedCounts(event.id))
+  const [error, setError] = useState("")
+  const [busy, setBusy] = useState(false)
+
   const dialogRef = useRef(null)
+  const bookingInProgress = useRef(false)
+
+  function remainingOf(category) {
+    return Math.max(0, category.available - (booked[category.id] ?? 0))
+  }
 
   const count = categories.reduce(
     (sum, category) => sum + (quantities[category.id] ?? 0),
@@ -24,45 +32,72 @@ function TicketBooking({ event }) {
   )
 
   const total = categories.reduce(
-    (sum, category) => sum + category.price * (quantities[category.id] ?? 0),
+    (sum, category) =>
+      sum + category.price * (quantities[category.id] ?? 0),
     0
   )
 
   function changeQuantity(category, change) {
-    setQuantities((current) => ({
-      ...current,
-      [category.id]: Math.max(
-        0,
-        Math.min(category.available, (current[category.id] ?? 0) + change)
-      ),
-    }))
-    setMessage("")
+    setQuantities((current) => {
+      const currentQuantity = current[category.id] ?? 0
+      const selectedCount = categories.reduce(
+        (sum, item) => sum + (current[item.id] ?? 0),
+        0
+      )
+
+      if (
+        change > 0 &&
+        (currentQuantity >= remainingOf(category) ||
+          selectedCount >= MAX_TICKETS_PER_BOOKING)
+      ) {
+        return current
+      }
+
+      return {
+        ...current,
+        [category.id]: Math.max(0, currentQuantity + change),
+      }
+    })
+
+    setError("")
   }
 
-  function handleBooking() {
-    if (!signedIn) {
-      dialogRef.current.showModal()
+  async function submitBooking(user) {
+    if (bookingInProgress.current || count === 0) return
+
+    bookingInProgress.current = true
+    setBusy(true)
+    setError("")
+
+    let registration
+
+    try {
+      registration = await createRegistration({ event, user, quantities })
+    } catch (caught) {
+      setError(caught.message || "We couldn't save your booking. Please try again.")
+      setBooked(getBookedCounts(event.id))
+      bookingInProgress.current = false
+      setBusy(false)
       return
     }
 
-    setMessage(
-      `Booking preview: ${count} ${count === 1 ? "ticket" : "tickets"} for ${
-        event.title
-      }, ${formatPrice(total)}. ${
-        event.approvalMode === "MANUAL"
-          ? "This event requires organizer approval."
-          : "This event uses automatic approval."
-      }`
-    )
+    window.location.assign(pageUrl("ticket", { id: registration.id }))
   }
 
-  function handleSignIn(e) {
-    e.preventDefault()
-    sessionStorage.setItem(demoSessionKey, "true")
-    setSignedIn(true)
+  function handleBooking() {
+    if (bookingInProgress.current || count === 0) return
+
+    if (session) {
+      void submitBooking(session)
+      return
+    }
+
+    dialogRef.current.showModal()
+  }
+
+  function handleSignedIn(user) {
     dialogRef.current.close()
-    e.currentTarget.reset()
-    setMessage("Signed in for this demo. Select Book now to review your booking.")
+    void submitBooking(user)
   }
 
   return (
@@ -73,6 +108,7 @@ function TicketBooking({ event }) {
 
       {categories.map((category) => {
         const quantity = quantities[category.id] ?? 0
+        const remaining = remainingOf(category)
 
         return (
           <div className="ticket-option" key={category.id}>
@@ -80,7 +116,7 @@ function TicketBooking({ event }) {
               <strong>{category.name}</strong>
               <p>
                 {formatPrice(category.price)} per ticket
-                {category.available === 0 && " · Sold out"}
+                {remaining === 0 ? " · Sold out" : ` · ${remaining} left`}
               </p>
             </div>
 
@@ -88,16 +124,22 @@ function TicketBooking({ event }) {
               <button
                 type="button"
                 aria-label={`Remove one ${category.name} ticket`}
-                disabled={quantity === 0}
+                disabled={busy || quantity === 0}
                 onClick={() => changeQuantity(category, -1)}
               >
                 −
               </button>
+
               <output aria-label={`${category.name} quantity`}>{quantity}</output>
+
               <button
                 type="button"
                 aria-label={`Add one ${category.name} ticket`}
-                disabled={quantity >= category.available}
+                disabled={
+                  busy ||
+                  quantity >= remaining ||
+                  count >= MAX_TICKETS_PER_BOOKING
+                }
                 onClick={() => changeQuantity(category, 1)}
               >
                 +
@@ -113,42 +155,46 @@ function TicketBooking({ event }) {
             {count} {count === 1 ? "ticket" : "tickets"} · {formatPrice(total)}
           </p>
 
+          {count >= MAX_TICKETS_PER_BOOKING && (
+            <p>Maximum {MAX_TICKETS_PER_BOOKING} tickets per booking.</p>
+          )}
+
           <button
             type="button"
             className="ticket-primary"
-            disabled={count === 0}
+            disabled={count === 0 || busy}
             onClick={handleBooking}
           >
-            {signedIn ? "Book now" : "Sign in and book now"}
+            {busy ? "Booking…" : session ? "Book now" : "Sign in and book now"}
           </button>
         </>
       )}
 
-      <p role="status">{message}</p>
+      {error && <p role="alert">{error}</p>}
 
-      <dialog ref={dialogRef} className="ticket-dialog" aria-labelledby="signin-title">
-        <form onSubmit={handleSignIn}>
-          <h2 id="signin-title">Sign in to book</h2>
-          <p>Demo sign-in. Use test credentials.</p>
+      <dialog
+        ref={dialogRef}
+        className="ticket-dialog"
+        aria-labelledby="signin-title"
+      >
+        <h2 id="signin-title">Log in to book</h2>
 
-          <label htmlFor="booking-email">Email</label>
-          <input id="booking-email" type="email" autoComplete="email" required />
+        <LoginForm
+          idPrefix="booking"
+          onSuccess={handleSignedIn}
+          onCancel={() => dialogRef.current.close()}
+        />
 
-          <label htmlFor="booking-password">Password</label>
-          <input
-            id="booking-password"
-            type="password"
-            autoComplete="current-password"
-            required
-          />
-
-          <div className="ticket-dialog__actions">
-            <button type="button" onClick={() => dialogRef.current.close()}>
-              Cancel
-            </button>
-            <button type="submit" className="ticket-primary">Sign in</button>
-          </div>
-        </form>
+        <p>
+          No account?{" "}
+          <a
+            href={pageUrl("signup", {
+              next: window.location.pathname + window.location.search,
+            })}
+          >
+            Sign up
+          </a>
+        </p>
       </dialog>
     </section>
   )

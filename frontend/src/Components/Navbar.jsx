@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react"
 import { getEvents } from "../services/eventService"
+import { logout } from "../services/authService"
+import { useSession } from "../hooks/useSession"
+import { currentPathWithSearch, pageUrl } from "../utils/navigation"
 import "./Navbar.css"
 
 function Navbar() {
+  const session = useSession()
   const [query, setQuery] = useState("")
   const [events, setEvents] = useState([])
   const [searchStatus, setSearchStatus] = useState("loading")
@@ -99,9 +103,41 @@ function Navbar() {
           )}
         </div>
 
-        <a className="site-nav__link" href="/#upcoming-events">
-          Events
-        </a>
+        <div className="site-nav__actions">
+          <a className="site-nav__link" href="/#upcoming-events">
+            Home
+          </a>
+
+          {session ? (
+            <>
+              <a className="site-nav__link" href={pageUrl("registrations")}>
+                My registrations
+              </a>
+              <button
+                type="button"
+                className="site-nav__button"
+                onClick={() => {
+                  logout()
+                  window.location.assign("/")
+                }}
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <a
+                className="site-nav__link"
+                href={pageUrl("login", { next: currentPathWithSearch() })}
+              >
+                Log in
+              </a>
+              <a className="site-nav__button" href={pageUrl("signup")}>
+                Sign up
+              </a>
+            </>
+          )}
+        </div>
       </nav>
     </header>
   )

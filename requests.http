@@ -1,0 +1,55 @@
+### 1) List events of organizer 1 (empty at the start -> "No events yet")
+GET http://localhost:8080/api/organizers/1/events
+
+### 2) Upload a picture (choose a real file path on your computer)
+POST http://localhost:8080/api/images
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="poster.jpg"
+Content-Type: image/jpeg
+
+< C:\Users\Kaled\OneDrive\Desktop\WhatsApp Image 2025-10-14 at 20.58.57_edd67c50.jpg
+--Boundary--
+
+### 3) Create an event
+POST http://localhost:8080/api/organizers/1/events
+Content-Type: application/json
+
+{
+  "name": "Summer Music Festival",
+  "imagePath": "/uploads/d77cda51-9dfb-42e2-b89d-631a0b677294.jpg",
+  "startDateTime": "2026-12-20T18:00:00",
+  "endDateTime": "2026-12-20T23:30:00",
+  "about": "A night of live music with local bands.",
+  "tickets": [
+    { "name": "Regular", "price": 150.00, "capacity": 500 },
+    { "name": "VIP", "price":  400.00, "capacity": 50 }
+  ],
+  "venue": {
+    "name": "City Open Theatre",
+    "location": "Downtown, Cairo",
+    "imagePath": null
+  },
+  "facilities": ["Parking", "Food court", "WiFi"]
+}
+
+### 4) Get one event
+GET http://localhost:8080/api/organizers/1/events/1
+
+### 5) Update it (same body shape as create)
+PUT http://localhost:8080/api/organizers/1/events/1
+Content-Type: application/json
+
+{
+  "name": "Summer Music Festival 2026",
+  "startDateTime": "2026-12-20T19:00:00",
+  "endDateTime": "2026-12-21T00:00:00",
+  "about": "Updated description.",
+  "tickets": [ { "name": "Regular", "price": 175.00, "capacity": 600 } ],
+  "venue": { "name": "City Open Theatre", "location": "Downtown, Cairo" },
+  "facilities": ["Parking"]
+}
+
+### 6) Delete it
+DELETE http://localhost:8080/api/organizers/1/events/1
