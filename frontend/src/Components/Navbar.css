@@ -138,3 +138,35 @@ html {
     scroll-padding-top: 140px;
   }
 }
+
+.site-nav__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+
+.site-nav__button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #ffcf70;
+  color: #182435;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .site-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .site-nav__actions {
+    justify-content: flex-start;
+  }
+}
