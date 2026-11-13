@@ -16,6 +16,14 @@ function readAll() {
   }
 }
 
+function writeAll(events) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(events))
+  } catch {
+    throw new Error("Your browser blocked storage, so the change could not be saved.")
+  }
+}
+
 /** Tickets that participants booked in this browser for one event. */
 function liveBookings(eventId) {
   return Object.values(getBookedCounts(eventId)).reduce((sum, count) => sum + count, 0)
@@ -47,4 +55,23 @@ export async function getDashboardSummary() {
 /** An organizer may only edit an event before it is published. */
 export function canEditEvent(event) {
   return event.status === "DRAFT" || event.status === "REJECTED"
+}
+
+/** Only a draft can be sent to the admin for review. */
+export function canSubmitForReview(event) {
+  return event.status === "DRAFT"
+}
+
+/** Moves a draft to PENDING_REVIEW so an admin can approve or reject it. */
+export async function submitForReview(eventId) {
+  const events = readAll()
+  const event = events.find((item) => String(item.id) === String(eventId))
+  if (!event) throw new Error("This event no longer exists.")
+  if (!canSubmitForReview(event)) throw new Error("Only drafts can be submitted for review.")
+
+  writeAll(
+    events.map((item) =>
+      item === event ? { ...item, status: "PENDING_REVIEW", submittedAt: new Date().toISOString() } : item
+    )
+  )
 }
