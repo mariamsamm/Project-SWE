@@ -239,11 +239,11 @@ GROUP BY e.id, e.organizer_id, e.name, e.status, e.capacity;
 -- =====================================================================
 
 INSERT INTO users (id, full_name, email, password_hash, role, phone, date_of_birth) VALUES
- (1, 'Mona Admin',       'admin@eventhub.demo',     '$2a$10$QumEnjzrX/tA91VnsSt1TemxtEeYf93XTYDDwzU6gv7p3hlc9kW3e', 'ADMIN',       '01000000001', '1990-03-10'),
- (2, 'Omar Organizer',   'organizer@eventhub.demo', '$2a$10$5Hmr1w3BOD3e83JrO/L.l.bVxvfCGd4dMRo2dw3XT.HbMDgEemcXe', 'ORGANIZER',   '01000000002', '1995-07-21'),
- (3, 'Sara Participant', 'sara@eventhub.demo',      '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', '01000000003', '2000-05-14'),
- (4, 'Youssef Hany',     'youssef@eventhub.demo',   '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', NULL,          '2001-11-02'),
- (5, 'Nour Adel',        'nour@eventhub.demo',      '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', NULL,          '2002-01-28');
+ (1, 'Layla Shaheen',       'Layla@eventhub.demo',     '$2a$10$QumEnjzrX/tA91VnsSt1TemxtEeYf93XTYDDwzU6gv7p3hlc9kW3e', 'ADMIN',       '01000000001', '1990-03-10'),
+ (2, 'Mariam Samir',   'samir@eventhub.demo', '$2a$10$5Hmr1w3BOD3e83JrO/L.l.bVxvfCGd4dMRo2dw3XT.HbMDgEemcXe', 'ORGANIZER',   '01000000002', '1995-07-21'),
+ (3, 'Mariam Mohamed', 'mariam@eventhub.demo',      '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', '01000000003', '2000-05-14'),
+ (4, 'Ahmed Khaled',     'Khaled@eventhub.demo',   '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', NULL,          '2001-11-02'),
+ (5, 'Abdelrahman',        'Abdelrahman@eventhub.demo',      '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', NULL,          '2002-01-28');
 
 INSERT INTO admins (user_id, job_title) VALUES
  (1, 'Student Activities Administrator');
@@ -327,6 +327,8 @@ INSERT INTO notifications (user_id, message, is_read) VALUES
  (2, 'Your event "Spring Music Night" was REJECTED. Reason: The venue is booked on that date.', FALSE),
  (1, 'New event request: "AI Hackathon" is waiting for review.', FALSE),
  (3, 'Your registration for "Christmas Celebration" was confirmed.', FALSE);
+
+
 
 
 -- =====================================================================
