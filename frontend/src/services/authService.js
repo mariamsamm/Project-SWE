@@ -9,6 +9,7 @@ const SESSION_KEY = "eventhub.session"
 // Public throwaway account so the app can be demoed immediately.
 export const DEMO_ACCOUNT = { email: "mariam@eventhub.demo", password: "Demo1234!" }
 export const DEMO_ORGANIZER = { email: "samir@eventhub.demo", password: "Organizer123!" }
+export const DEMO_ADMIN = { email: "layla@eventhub.demo", password: "Admin123!" }
 
 function readJson(storage, key, fallback) {
   try {
@@ -45,6 +46,7 @@ function randomId() {
 const DEMO_USERS = [
   { id: "u-demo", name: "Mariam Mohamed", ...DEMO_ACCOUNT, dateOfBirth: "2000-05-14", role: "PARTICIPANT" },
   { id: "u-organizer", name: "Mariam Samir", ...DEMO_ORGANIZER, dateOfBirth: "1995-07-21", role: "ORGANIZER" },
+  { id: "u-admin", name: "Layla Shaheen", ...DEMO_ADMIN, dateOfBirth: "1990-03-10", role: "ADMIN" },
 ]
 
 async function seedDemoUser() {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { getEvents } from "../services/eventService"
 import { logout } from "../services/authService"
+import CreateEventButton from "./CreateEventButton"
 import { useSession } from "../hooks/useSession"
 import { currentPathWithSearch, pageUrl } from "../utils/navigation"
 import "./Navbar.css"
@@ -107,6 +108,8 @@ function Navbar() {
           <a className="site-nav__link" href="/#upcoming-events">
             Home
           </a>
+
+          <CreateEventButton />
 
           {session ? (
             <>

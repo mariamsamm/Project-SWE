@@ -1,4 +1,4 @@
-import { DEMO_ACCOUNT, DEMO_ORGANIZER } from "../services/authService"
+import { DEMO_ACCOUNT, DEMO_ADMIN, DEMO_ORGANIZER } from "../services/authService"
 import LoginForm from "../Components/LoginForm"
 import { goTo, pageUrl, safeNext } from "../utils/navigation"
 import "./AccountPages.css"
@@ -13,8 +13,9 @@ function LoginPage() {
 
       <LoginForm
         onSuccess={(session) => {
-          // Organizers go straight to their dashboard; everyone else goes back to where they were.
-          goTo(session.role === "ORGANIZER" ? pageUrl("organizer") : next)
+          // Organizers with nowhere special to go land on their dashboard;
+          // everyone else goes back to where they were (for example the Create event page).
+          goTo(session.role === "ORGANIZER" && next === "/" ? pageUrl("organizer") : next)
         }}
       />
 
@@ -29,6 +30,9 @@ function LoginPage() {
         <strong>Demo organizer</strong>
         <span>{DEMO_ORGANIZER.email}</span>
         <span>{DEMO_ORGANIZER.password}</span>
+        <strong>Demo admin</strong>
+        <span>{DEMO_ADMIN.email}</span>
+        <span>{DEMO_ADMIN.password}</span>
         <small>Sample data only. There is no real backend yet.</small>
       </aside>
     </main>
