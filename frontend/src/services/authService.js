@@ -7,8 +7,8 @@ const USERS_KEY = "eventhub.users"
 const SESSION_KEY = "eventhub.session"
 
 // Public throwaway account so the app can be demoed immediately.
-export const DEMO_ACCOUNT = { email: "sara@eventhub.demo", password: "Demo1234!" }
-export const DEMO_ORGANIZER = { email: "organizer@eventhub.demo", password: "Organizer123!" }
+export const DEMO_ACCOUNT = { email: "mariam@eventhub.demo", password: "Demo1234!" }
+export const DEMO_ORGANIZER = { email: "samir@eventhub.demo", password: "Organizer123!" }
 
 function readJson(storage, key, fallback) {
   try {
@@ -43,8 +43,8 @@ function randomId() {
 // Demo accounts that always exist. They match the users table in
 // backend/database/eventhub_database.sql. The role decides which page opens after login.
 const DEMO_USERS = [
-  { id: "u-demo", name: "Sara Participant", ...DEMO_ACCOUNT, dateOfBirth: "2000-05-14", role: "PARTICIPANT" },
-  { id: "u-organizer", name: "Omar Organizer", ...DEMO_ORGANIZER, dateOfBirth: "1995-07-21", role: "ORGANIZER" },
+  { id: "u-demo", name: "Mariam Mohamed", ...DEMO_ACCOUNT, dateOfBirth: "2000-05-14", role: "PARTICIPANT" },
+  { id: "u-organizer", name: "Mariam Samir", ...DEMO_ORGANIZER, dateOfBirth: "1995-07-21", role: "ORGANIZER" },
 ]
 
 async function seedDemoUser() {
