@@ -5,9 +5,11 @@
 --  and some demo data. Running it again starts from a clean copy.
 --
 --  Demo accounts (passwords are stored as BCrypt hashes, never as text):
---    admin@eventhub.demo      / Admin123!      -> admin dashboard
---    organizer@eventhub.demo  / Organizer123!  -> organizer dashboard
---    sara@eventhub.demo       / Demo1234!      -> participant
+--    layla@eventhub.demo        / Admin123!      -> admin dashboard
+--    samir@eventhub.demo        / Organizer123!  -> organizer dashboard
+--    mariam@eventhub.demo       / Demo1234!      -> participant
+--    khaled@eventhub.demo       / Demo1234!      -> participant
+--    abdelrahman@eventhub.demo  / Demo1234!      -> participant
 -- =====================================================================
 
 DROP DATABASE IF EXISTS eventhub;
@@ -239,11 +241,11 @@ GROUP BY e.id, e.organizer_id, e.name, e.status, e.capacity;
 -- =====================================================================
 
 INSERT INTO users (id, full_name, email, password_hash, role, phone, date_of_birth) VALUES
- (1, 'Mona Admin',       'admin@eventhub.demo',     '$2a$10$QumEnjzrX/tA91VnsSt1TemxtEeYf93XTYDDwzU6gv7p3hlc9kW3e', 'ADMIN',       '01000000001', '1990-03-10'),
- (2, 'Omar Organizer',   'organizer@eventhub.demo', '$2a$10$5Hmr1w3BOD3e83JrO/L.l.bVxvfCGd4dMRo2dw3XT.HbMDgEemcXe', 'ORGANIZER',   '01000000002', '1995-07-21'),
- (3, 'Sara Participant', 'sara@eventhub.demo',      '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', '01000000003', '2000-05-14'),
- (4, 'Youssef Hany',     'youssef@eventhub.demo',   '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', NULL,          '2001-11-02'),
- (5, 'Nour Adel',        'nour@eventhub.demo',      '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', NULL,          '2002-01-28');
+ (1, 'Layla Shaheen',       'layla@eventhub.demo',     '$2a$10$QumEnjzrX/tA91VnsSt1TemxtEeYf93XTYDDwzU6gv7p3hlc9kW3e', 'ADMIN',       '01000000001', '1990-03-10'),
+ (2, 'Mariam Samir',   'samir@eventhub.demo', '$2a$10$5Hmr1w3BOD3e83JrO/L.l.bVxvfCGd4dMRo2dw3XT.HbMDgEemcXe', 'ORGANIZER',   '01000000002', '1995-07-21'),
+ (3, 'Mariam Mohamed', 'mariam@eventhub.demo',      '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', '01000000003', '2000-05-14'),
+ (4, 'Ahmed Khaled',     'khaled@eventhub.demo',   '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', NULL,          '2001-11-02'),
+ (5, 'Abdelrahman',        'abdelrahman@eventhub.demo',      '$2a$10$vIZgXs90ruH7imxCluMcQu7E7KoSAIMgKRbS72IEOMricABzU.XHy', 'PARTICIPANT', NULL,          '2002-01-28');
 
 INSERT INTO admins (user_id, job_title) VALUES
  (1, 'Student Activities Administrator');
@@ -329,13 +331,15 @@ INSERT INTO notifications (user_id, message, is_read) VALUES
  (3, 'Your registration for "Christmas Celebration" was confirmed.', FALSE);
 
 
+
+
 -- =====================================================================
 --  USEFUL QUERIES (select one and press Ctrl+Enter to try it)
 -- =====================================================================
 
 -- Login: find the account for an email; the backend then checks the
 -- password against password_hash with BCrypt and opens the page by role.
--- SELECT id, full_name, role, password_hash FROM users WHERE email = 'organizer@eventhub.demo' AND is_active = TRUE;
+-- SELECT id, full_name, role, password_hash FROM users WHERE email = 'samir@eventhub.demo' AND is_active = TRUE;
 
 -- Organizer dashboard: my events with their numbers.
 -- SELECT * FROM event_stats WHERE organizer_id = 2;

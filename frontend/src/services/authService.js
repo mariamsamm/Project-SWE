@@ -7,7 +7,9 @@ const USERS_KEY = "eventhub.users"
 const SESSION_KEY = "eventhub.session"
 
 // Public throwaway account so the app can be demoed immediately.
-export const DEMO_ACCOUNT = { email: "sara@eventhub.demo", password: "Demo1234!" }
+export const DEMO_ACCOUNT = { email: "mariam@eventhub.demo", password: "Demo1234!" }
+export const DEMO_ORGANIZER = { email: "samir@eventhub.demo", password: "Organizer123!" }
+export const DEMO_ADMIN = { email: "layla@eventhub.demo", password: "Admin123!" }
 
 function readJson(storage, key, fallback) {
   try {
@@ -39,19 +41,25 @@ function randomId() {
   return Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, "0")).join("")
 }
 
+// Demo accounts that always exist. They match the users table in
+// backend/database/eventhub_database.sql. The role decides which page opens after login.
+const DEMO_USERS = [
+  { id: "u-demo", name: "Mariam Mohamed", ...DEMO_ACCOUNT, dateOfBirth: "2000-05-14", role: "PARTICIPANT" },
+  { id: "u-organizer", name: "Mariam Samir", ...DEMO_ORGANIZER, dateOfBirth: "1995-07-21", role: "ORGANIZER" },
+  { id: "u-admin", name: "Layla Shaheen", ...DEMO_ADMIN, dateOfBirth: "1990-03-10", role: "ADMIN" },
+]
+
 async function seedDemoUser() {
   const users = readJson(localStorage, USERS_KEY, [])
-  if (users.some((user) => user.email === DEMO_ACCOUNT.email)) return users
-  const salt = randomId()
-  users.push({
-    id: "u-demo",
-    name: "Sara Participant",
-    email: DEMO_ACCOUNT.email,
-    dateOfBirth: "2000-05-14",
-    salt,
-    hash: await digest(salt, DEMO_ACCOUNT.password),
-  })
-  writeJson(localStorage, USERS_KEY, users)
+  let changed = false
+  for (const demo of DEMO_USERS) {
+    if (users.some((user) => user.email === demo.email)) continue
+    const salt = randomId()
+    const { password, ...profile } = demo
+    users.push({ ...profile, salt, hash: await digest(salt, password) })
+    changed = true
+  }
+  if (changed) writeJson(localStorage, USERS_KEY, users)
   return users
 }
 
@@ -116,7 +124,15 @@ export function subscribeSession(listener) {
 }
 
 function setSession(user) {
-  const session = user ? { id: user.id, name: user.name, email: user.email, dateOfBirth: user.dateOfBirth } : null
+  const session = user
+    ? {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        dateOfBirth: user.dateOfBirth,
+        role: user.role ?? "PARTICIPANT",
+      }
+    : null
   try {
     if (session) sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
     else sessionStorage.removeItem(SESSION_KEY)
@@ -149,6 +165,7 @@ export async function signup(values) {
     name: values.name.trim(),
     email,
     dateOfBirth: values.dateOfBirth,
+    role: "PARTICIPANT",
     salt,
     hash: await digest(salt, values.password),
   }

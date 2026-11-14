@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { getEvents } from "../services/eventService"
 import { logout } from "../services/authService"
+import CreateEventButton from "./CreateEventButton"
 import { useSession } from "../hooks/useSession"
 import { currentPathWithSearch, pageUrl } from "../utils/navigation"
 import "./Navbar.css"
@@ -108,11 +109,19 @@ function Navbar() {
             Home
           </a>
 
+          <CreateEventButton />
+
           {session ? (
             <>
-              <a className="site-nav__link" href={pageUrl("registrations")}>
-                My registrations
-              </a>
+              {session.role === "ORGANIZER" ? (
+                <a className="site-nav__link" href={pageUrl("organizer")}>
+                  Dashboard
+                </a>
+              ) : (
+                <a className="site-nav__link" href={pageUrl("registrations")}>
+                  My registrations
+                </a>
+              )}
               <button
                 type="button"
                 className="site-nav__button"

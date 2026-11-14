@@ -1,4 +1,4 @@
-import { DEMO_ACCOUNT } from "../services/authService"
+import { DEMO_ACCOUNT, DEMO_ADMIN, DEMO_ORGANIZER } from "../services/authService"
 import LoginForm from "../Components/LoginForm"
 import { goTo, pageUrl, safeNext } from "../utils/navigation"
 import "./AccountPages.css"
@@ -11,16 +11,28 @@ function LoginPage() {
       <h1>Log in</h1>
       <p className="account-page__intro">Log in to book tickets and see your registrations.</p>
 
-      <LoginForm onSuccess={() => goTo(next)} />
+      <LoginForm
+        onSuccess={(session) => {
+          // Organizers with nowhere special to go land on their dashboard;
+          // everyone else goes back to where they were (for example the Create event page).
+          goTo(session.role === "ORGANIZER" && next === "/" ? pageUrl("organizer") : next)
+        }}
+      />
 
       <p className="account-page__switch">
         New to EventHub? <a href={pageUrl("signup", next !== "/" ? { next } : {})}>Create an account</a>
       </p>
 
-      <aside className="demo-hint" aria-label="Demo account">
-        <strong>Demo account</strong>
+      <aside className="demo-hint" aria-label="Demo accounts">
+        <strong>Demo participant</strong>
         <span>{DEMO_ACCOUNT.email}</span>
         <span>{DEMO_ACCOUNT.password}</span>
+        <strong>Demo organizer</strong>
+        <span>{DEMO_ORGANIZER.email}</span>
+        <span>{DEMO_ORGANIZER.password}</span>
+        <strong>Demo admin</strong>
+        <span>{DEMO_ADMIN.email}</span>
+        <span>{DEMO_ADMIN.password}</span>
         <small>Sample data only. There is no real backend yet.</small>
       </aside>
     </main>
