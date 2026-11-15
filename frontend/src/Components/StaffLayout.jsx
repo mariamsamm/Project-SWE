@@ -15,8 +15,9 @@ function initials(name) {
     .toUpperCase()
 }
 
-/** Title row at the top of an organizer or admin page, with the logged-in user on the right. */
-export function StaffHeader({ eyebrow, title, badge, children }) {
+/** Title row at the top of an organizer or admin page, with the logged-in user on the right.
+ * `aside` is an optional extra (for example a notification bell) shown beside the user. */
+export function StaffHeader({ eyebrow, title, badge, aside, children }) {
   const session = useSession()
   return (
     <header className="organizer__header">
@@ -28,14 +29,17 @@ export function StaffHeader({ eyebrow, title, badge, children }) {
         {children}
       </div>
       {session && (
-        <div className="organizer__profile">
-          <span className="organizer__avatar" aria-hidden="true">
-            {initials(session.name)}
-          </span>
-          <span>
-            {session.name}
-            <small>{session.email}</small>
-          </span>
+        <div className="staff-header-side">
+          {aside}
+          <div className="organizer__profile">
+            <span className="organizer__avatar" aria-hidden="true">
+              {initials(session.name)}
+            </span>
+            <span>
+              {session.name}
+              <small>{session.email}</small>
+            </span>
+          </div>
         </div>
       )}
     </header>

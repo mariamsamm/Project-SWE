@@ -563,7 +563,7 @@ function CreateEventPage({ eventId: initialId }) {
           </span>
         </header>
 
-        {original?.status === "REJECTED" && original.rejectionReason && (
+        {(original?.status === "REJECTED" || original?.status === "REVISION_REQUIRED") && original.rejectionReason && (
           <div className="ce-banner" role="note">
             <strong>Admin feedback:</strong> {original.rejectionReason} Update the event, then submit it again.
           </div>

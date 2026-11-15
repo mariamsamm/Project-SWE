@@ -3,6 +3,7 @@
 // (for example POST /api/admin/events/{id}/review) and keep the same function names.
 import { listUsers, updateUser } from "./authService"
 import { sendEmail } from "./notificationService"
+import { listRegistrations } from "./manageEventService"
 import { cancelEvent, effectiveStatus, getAllEvents, getOrganizerEvent, updateEvent } from "./organizerService"
 
 export const DECISIONS = {
@@ -15,15 +16,48 @@ export const MIN_FEEDBACK = 10
 
 /* ---------- events (Admin.viewAllEvents) ---------- */
 
-/** Everything the admin dashboard needs in one call. */
+const REVIEW_WORDS = { APPROVED: "approved", REVISION_REQUIRED: "asked for changes to", REJECTED: "rejected" }
+
+/**
+ * The latest things that happened on the platform, newest first:
+ * events submitted, admin decisions, cancellations and new registrations.
+ */
+function buildActivity(events, registrationsByEvent, limit) {
+  const items = []
+
+  for (const event of events) {
+    const about = { eventId: event.id, eventTitle: event.title }
+
+    if (event.submittedAt) {
+      items.push({ ...about, id: `submitted-${event.id}`, kind: "SUBMITTED", at: event.submittedAt, actor: event.organizerName, action: "submitted" })
+    }
+    for (const review of event.reviews ?? []) {
+      items.push({ ...about, id: review.id, kind: review.decision, at: review.reviewedAt, actor: review.reviewerName, action: REVIEW_WORDS[review.decision] })
+    }
+    if (event.cancelledAt) {
+      items.push({ ...about, id: `cancelled-${event.id}`, kind: "CANCELLED", at: event.cancelledAt, actor: "", action: "was cancelled:" })
+    }
+    // Only the 3 newest sign-ups per event, so one busy event doesn't fill the list.
+    for (const row of (registrationsByEvent[event.id] ?? []).slice(0, 3)) {
+      items.push({ ...about, id: `registered-${row.id}`, kind: "REGISTERED", at: row.createdAt, actor: row.name, action: "registered for" })
+    }
+  }
+
+  return items.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, limit)
+}
+
+/** Everything the admin pages need in one call. */
 export async function getAdminSummary() {
   const [events, users] = await Promise.all([getAllEvents(), listUsers()])
   const withStatus = events.map((event) => ({ ...event, shownStatus: effectiveStatus(event) }))
   const count = (status) => withStatus.filter((event) => event.shownStatus === status).length
 
-  const reviews = withStatus
-    .flatMap((event) => (event.reviews ?? []).map((review) => ({ ...review, eventId: event.id, eventTitle: event.title })))
-    .sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt))
+  // Registrations of every event (newest first), for the participant total and the activity list.
+  const registrationsByEvent = {}
+  for (const event of withStatus) registrationsByEvent[event.id] = await listRegistrations(event.id)
+  const participants = Object.values(registrationsByEvent)
+    .flat()
+    .filter((row) => row.status === "APPROVED" || row.status === "PENDING").length
 
   return {
     events: withStatus,
@@ -31,12 +65,12 @@ export async function getAdminSummary() {
     totalEvents: withStatus.length,
     published: count("PUBLISHED"),
     pending: count("PENDING_REVIEW"),
-    rejected: count("REJECTED"),
+    participants,
     // Oldest submission first, so nobody waits too long.
     pendingEvents: withStatus
       .filter((event) => event.status === "PENDING_REVIEW")
       .sort((a, b) => String(a.submittedAt ?? "").localeCompare(String(b.submittedAt ?? ""))),
-    recentReviews: reviews.slice(0, 5),
+    activity: buildActivity(withStatus, registrationsByEvent, 8),
   }
 }
 

@@ -20,8 +20,8 @@ function Icon({ name }) {
 const LINKS = [
   { id: "dashboard", label: "Dashboard", href: pageUrl("admin") },
   { id: "pending", label: "Pending reviews", href: `${pageUrl("admin")}#pending-reviews` },
-  { id: "events", label: "All events", href: `${pageUrl("admin")}#all-events` },
-  { id: "users", label: "Users", href: `${pageUrl("admin")}#users` },
+  { id: "events", label: "All events", href: pageUrl("admin-events") },
+  { id: "users", label: "Users", href: pageUrl("admin-users") },
 ]
 
 /** Side menu shared by every admin page. `active` is the id of the current link. */
