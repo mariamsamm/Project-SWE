@@ -22,4 +22,8 @@ export const STATUS_LABELS = {
   DRAFT: "Draft",
   PENDING_REVIEW: "Pending review",
   PUBLISHED: "Published",
+  REVISION_REQUIRED: "Changes requested",
+  CANCELLED: "Cancelled",
+  COMPLETED: "Completed",
+  APPROVED: "Approved",
 }
