@@ -181,9 +181,39 @@ export async function login(emailInput, password) {
   const failure = new Error("Incorrect email or password.")
   if (!user) throw failure
   if ((await digest(user.salt, password)) !== user.hash) throw failure
+  if (user.suspended) throw new Error("This account has been suspended. Please contact an admin.")
   return setSession(user)
 }
 
 export function logout() {
   setSession(null)
+}
+
+/* ---------- user management (admin) ---------- */
+
+/** Every account, without password data. */
+export async function listUsers() {
+  const users = await seedDemoUser()
+  return users.map((user) => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role ?? "PARTICIPANT",
+    suspended: Boolean(user.suspended),
+  }))
+}
+
+/** Changes a user's role or suspended flag. */
+export async function updateUser(userId, { role, suspended }) {
+  const users = await seedDemoUser()
+  if (!users.some((user) => user.id === userId)) throw new Error("This user no longer exists.")
+  writeJson(
+    localStorage,
+    USERS_KEY,
+    users.map((user) =>
+      user.id === userId
+        ? { ...user, role: role ?? user.role ?? "PARTICIPANT", suspended: suspended ?? Boolean(user.suspended) }
+        : user
+    )
+  )
 }

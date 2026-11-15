@@ -29,12 +29,54 @@ function liveBookings(eventId) {
   return Object.values(getBookedCounts(eventId)).reduce((sum, count) => sum + count, 0)
 }
 
+// Until events store their owner, every demo event belongs to the demo organizer.
+const DEMO_OWNER = { organizerName: "Mariam Samir", organizerEmail: "samir@eventhub.demo" }
+
+function withLiveCount(event) {
+  return { ...DEMO_OWNER, ...event, registrations: event.registrations + liveBookings(event.id) }
+}
+
 /** All events that belong to the organizer, with up-to-date registration counts. */
 export async function getMyEvents() {
-  return readAll().map((event) => ({
-    ...event,
-    registrations: event.registrations + liveBookings(event.id),
-  }))
+  return readAll().map(withLiveCount)
+}
+
+/** Every event on the platform (admin pages). */
+export async function getAllEvents() {
+  return readAll().map(withLiveCount)
+}
+
+/** A published event whose end time has passed is shown as COMPLETED. */
+export function effectiveStatus(event) {
+  if (event.status === "PUBLISHED" && new Date(event.endDate).getTime() < Date.now()) return "COMPLETED"
+  return event.status
+}
+
+/** Changes some fields of one stored event and returns the updated event. */
+export async function updateEvent(eventId, patch) {
+  const events = readAll()
+  const event = events.find((item) => String(item.id) === String(eventId))
+  if (!event) throw new Error("This event no longer exists.")
+  const updated = { ...event, ...patch, updatedAt: new Date().toISOString() }
+  writeAll(events.map((item) => (item === event ? updated : item)))
+  return updated
+}
+
+/** A published or pending event can be cancelled. */
+export function canCancelEvent(event) {
+  return effectiveStatus(event) === "PUBLISHED" || event.status === "PENDING_REVIEW"
+}
+
+/** Event.cancel(): marks the event CANCELLED and keeps the reason. */
+export async function cancelEvent(eventId, reason) {
+  const event = await getOrganizerEvent(eventId)
+  if (!event) throw new Error("This event no longer exists.")
+  if (!canCancelEvent(event)) throw new Error("Only published or pending events can be cancelled.")
+  return updateEvent(eventId, {
+    status: "CANCELLED",
+    cancelReason: reason.trim(),
+    cancelledAt: new Date().toISOString(),
+  })
 }
 
 /** Everything the organizer dashboard needs in one call. */
@@ -54,7 +96,7 @@ export async function getDashboardSummary() {
 
 /** An organizer may only edit an event before it is published. */
 export function canEditEvent(event) {
-  return event.status === "DRAFT" || event.status === "REJECTED"
+  return event.status === "DRAFT" || event.status === "REJECTED" || event.status === "REVISION_REQUIRED"
 }
 
 /** Only a draft can be sent to the admin for review. */
@@ -78,7 +120,8 @@ export async function submitForReview(eventId) {
 
 /** One of the organizer's events, or null if it doesn't exist. */
 export async function getOrganizerEvent(eventId) {
-  return readAll().find((event) => String(event.id) === String(eventId)) ?? null
+  const event = readAll().find((item) => String(item.id) === String(eventId))
+  return event ? { ...DEMO_OWNER, ...event } : null
 }
 
 /**
