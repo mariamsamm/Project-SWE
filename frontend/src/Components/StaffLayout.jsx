@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { useSession } from "../hooks/useSession"
 import { currentPathWithSearch, goTo, pageUrl } from "../utils/navigation"
+import AdminSidebar from "./AdminSidebar"
 import OrganizerSidebar from "./OrganizerSidebar"
 
 const ROLE_WORDS = { ORGANIZER: "event organizers", ADMIN: "admins" }
@@ -46,7 +47,7 @@ export function StaffHeader({ eyebrow, title, badge, children }) {
  * shows the right side menu, and only then shows the page (`children`).
  * `roles` lists who may open the page, for example ["ADMIN"].
  */
-function StaffLayout({ roles, active, children }) {
+function StaffLayout({ roles, active, pendingCount, children }) {
   const session = useSession()
   const allowed = Boolean(session) && roles.includes(session.role)
 
@@ -82,7 +83,11 @@ function StaffLayout({ roles, active, children }) {
 
   return (
     <main className="organizer">
-      <OrganizerSidebar active={active} />
+      {session.role === "ADMIN" ? (
+        <AdminSidebar active={active} pendingCount={pendingCount} />
+      ) : (
+        <OrganizerSidebar active={active} />
+      )}
       <div className="organizer__content">{children}</div>
     </main>
   )

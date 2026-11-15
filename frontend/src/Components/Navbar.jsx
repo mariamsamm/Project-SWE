@@ -117,6 +117,10 @@ function Navbar() {
                 <a className="site-nav__link" href={pageUrl("organizer")}>
                   Dashboard
                 </a>
+              ) : session.role === "ADMIN" ? (
+                <a className="site-nav__link" href={pageUrl("admin")}>
+                  Admin
+                </a>
               ) : (
                 <a className="site-nav__link" href={pageUrl("registrations")}>
                   My registrations
