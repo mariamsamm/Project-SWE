@@ -1,10 +1,9 @@
-package registration.model;
- 
-public enum fieldtype {
+package eventsystem;
+
+enum fieldtype {
     text,
     number,
     email,
     dropdown,
     yesno
 }
- 
