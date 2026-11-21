@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import AdminEventsPanel from "../Components/AdminEventsPanel"
 import DashboardCard from "../Components/DashboardCard"
 import StaffLayout, { StaffHeader } from "../Components/StaffLayout"
-import StatusBadge from "../Components/StatusBadge"
 import { useSession } from "../hooks/useSession"
 import { getAdminSummary } from "../services/adminService"
 import { formatShortDate } from "../utils/format"
@@ -36,16 +35,6 @@ function timeAgo(iso, now) {
   if (passed < DAY) return plural(Math.floor(passed / HOUR), "hour")
   if (passed < 7 * DAY) return plural(Math.floor(passed / DAY), "day")
   return formatShortDate(iso)
-}
-
-/** How long an event has waited for a review. Long waits are highlighted. */
-function waiting(event, now) {
-  if (!event.submittedAt) return { text: "Waiting for review", long: false }
-  const days = Math.floor((now - new Date(event.submittedAt).getTime()) / DAY)
-  return {
-    text: `Submitted ${formatShortDate(event.submittedAt)}${days > 0 ? ` · waiting ${days} ${days === 1 ? "day" : "days"}` : ""}`,
-    long: days >= 3,
-  }
 }
 
 function scrollTo(id) {
@@ -108,51 +97,12 @@ function NotificationBell({ pendingEvents }) {
               ))}
             </ul>
           )}
+          <a className="staff-link staff-bell__all" href={pageUrl("admin-reviews")}>
+            See all reviews →
+          </a>
         </div>
       )}
     </div>
-  )
-}
-
-/* ---------- 3. Pending event approvals ---------- */
-
-function PendingPanel({ events, now }) {
-  return (
-    <section className="organizer-panel" id="pending-reviews" aria-labelledby="pending-title">
-      <div className="organizer-panel__header">
-        <h2 id="pending-title">Pending event approvals</h2>
-        <span className="organizer-muted">Oldest first</span>
-      </div>
-      <p className="organizer-muted staff-tab-intro">Events submitted by organizers and waiting for your review.</p>
-
-      {events.length === 0 ? (
-        <div className="organizer-empty">
-          <p>All caught up. No events are waiting for a review.</p>
-        </div>
-      ) : (
-        <ul className="staff-queue">
-          {events.map((event) => {
-            const wait = waiting(event, now)
-            return (
-              <li key={event.id}>
-                <div>
-                  <h3>
-                    {event.title} <StatusBadge status={event.status} />
-                  </h3>
-                  <p className="organizer-muted">
-                    {event.organizerName} · {formatShortDate(event.startDate)} · {event.category}
-                  </p>
-                  <span className={`staff-wait${wait.long ? " staff-wait--long" : ""}`}>{wait.text}</span>
-                </div>
-                <a className="organizer-btn organizer-btn--primary" href={pageUrl("review-event", { id: event.id })}>
-                  View details →
-                </a>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </section>
   )
 }
 
@@ -199,8 +149,8 @@ function QuickActions({ pendingEvents, userCount, eventCount }) {
   const actions = [
     {
       title: "Review pending events",
-      text: next ? `${pendingEvents.length} waiting. Start with "${next.title}".` : "No new submissions right now.",
-      href: next ? pageUrl("review-event", { id: next.id }) : `${pageUrl("admin")}#pending-reviews`,
+      text: next ? `${pendingEvents.length} waiting for your approval.` : "See every event and its review status.",
+      href: pageUrl("admin-reviews"),
       icon: "M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
     },
     {
@@ -301,7 +251,7 @@ function Dashboard({ onPendingCount }) {
               label="Pending approvals"
               value={summary.pending}
               note={summary.pending > 0 ? "Need attention" : "All caught up"}
-              onClick={() => scrollTo("pending-reviews")}
+              onClick={() => goTo(pageUrl("admin-reviews"))}
             />
             <DashboardCard
               label="Published events"
@@ -318,17 +268,15 @@ function Dashboard({ onPendingCount }) {
           </section>
 
           <div className="organizer__panels">
-            <PendingPanel events={summary.pendingEvents} now={today.now} />
             <ActivityPanel activity={summary.activity} now={today.now} />
+            <QuickActions
+              pendingEvents={summary.pendingEvents}
+              userCount={summary.users.length}
+              eventCount={summary.totalEvents}
+            />
           </div>
 
           <AdminEventsPanel events={summary.events} overview />
-
-          <QuickActions
-            pendingEvents={summary.pendingEvents}
-            userCount={summary.users.length}
-            eventCount={summary.totalEvents}
-          />
         </>
       )}
     </>
