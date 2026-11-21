@@ -381,8 +381,8 @@ function Review({ eventId, onPendingCount }) {
       <div className="organizer-panel">
         <h1 className="staff-title">Event not found</h1>
         <p className="organizer-muted">This event doesn&apos;t exist or was removed.</p>
-        <a className="organizer-btn organizer-btn--primary staff-top-gap" href={pageUrl("admin")}>
-          Back to dashboard
+        <a className="organizer-btn organizer-btn--primary staff-top-gap" href={pageUrl("admin-reviews")}>
+          Back to pending reviews
         </a>
       </div>
     )
@@ -414,8 +414,8 @@ function Review({ eventId, onPendingCount }) {
                     Review next event ({others.length} left)
                   </a>
                 )}
-                <a className="organizer-btn" href={pageUrl("admin")}>
-                  Back to dashboard
+                <a className="organizer-btn" href={pageUrl("admin-reviews")}>
+                  Back to pending reviews
                 </a>
               </div>
             </section>
