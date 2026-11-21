@@ -1479,3 +1479,37 @@ strong > .staff-tag:first-child {
     left: 0;
   }
 }
+
+/* ---------- Pending reviews page ---------- */
+
+.staff-queue__item--needs {
+  border-left: 4px solid #efba42;
+  background: #fffaf0;
+}
+
+.staff-queue__item--done {
+  opacity: 0.92;
+}
+
+.staff-review-state {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.staff-review-state--needs {
+  color: #6b4700;
+}
+
+.staff-review-state--waiting {
+  color: #7a3d00;
+}
+
+.staff-review-state--done {
+  color: #14532d;
+}
+
+.staff-bell__all {
+  display: inline-block;
+  margin-top: 8px;
+  padding-inline: 12px;
+}
