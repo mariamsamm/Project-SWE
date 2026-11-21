@@ -11,6 +11,7 @@ import ManageEventPage from "./pages/ManageEventPage"
 import AdminDashboard from "./pages/AdminDashboard"
 import AdminEventsPage from "./pages/AdminEventsPage"
 import AdminUsersPage from "./pages/AdminUsersPage"
+import AdminReviewsPage from "./pages/AdminReviewsPage"
 import ReviewEventPage from "./pages/ReviewEventPage"
 import { useEffect, useRef } from "react"
 
@@ -72,6 +73,7 @@ function App() {
   else if (page === "admin") content = <AdminDashboard />
   else if (page === "admin-events") content = <AdminEventsPage />
   else if (page === "admin-users") content = <AdminUsersPage />
+  else if (page === "admin-reviews") content = <AdminReviewsPage />
   else if (page === "review-event") content = <ReviewEventPage eventId={params.get("id")} />
   else if (page === "registrations") content = <MyRegistrationsPage />
   else if (page === "ticket") content = <MyTicketPage registrationId={params.get("id") ?? ""} />
