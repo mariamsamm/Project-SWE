@@ -1,6 +1,7 @@
-// DEMO NOTIFICATIONS. No real email is sent yet: every message is saved in this
-// browser so the pages can show what was sent. When the Spring Boot API is ready,
-// replace the bodies with fetch calls (for example POST /api/notifications).
+import { api } from "./api"
+
+// The organizer's "Messages" tab still keeps its log in this browser (the backend has
+// no "send a message" endpoint). The functions at the bottom read the real notifications.
 
 const KEY = "eventhub.notifications"
 const LIMIT = 200
@@ -49,4 +50,22 @@ export async function sendTicket({ eventId, to, ticketCode, eventTitle }) {
 /** Messages sent for one event, newest first. */
 export async function listNotifications(eventId) {
   return readAll().filter((item) => item.eventId === String(eventId))
+}
+
+/* ---------- real notifications from the backend (any logged-in user) ---------- */
+
+/** GET /api/users/{id}/notifications: [{ id, message, createdAt, read }] */
+export async function getMyNotifications(userId) {
+  return api(`/api/users/${userId}/notifications`)
+}
+
+/** GET /api/users/{id}/notifications/unread-count -> number */
+export async function getUnreadCount(userId) {
+  const data = await api(`/api/users/${userId}/notifications/unread-count`)
+  return data?.unread ?? 0
+}
+
+/** POST /api/users/{id}/notifications/read-all */
+export async function markAllRead(userId) {
+  await api(`/api/users/${userId}/notifications/read-all`, { method: "POST" })
 }

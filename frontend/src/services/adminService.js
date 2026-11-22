@@ -1,9 +1,13 @@
-// DEMO DATA. Admin actions change the events and users saved in this browser.
-// When the Spring Boot API is ready, replace the function bodies with fetch calls
-// (for example POST /api/admin/events/{id}/review) and keep the same function names.
-import { listUsers, updateUser } from "./authService"
-import { sendEmail } from "./notificationService"
-import { cancelEvent, effectiveStatus, getAllEvents, getOrganizerEvent, updateEvent } from "./organizerService"
+// Admin pages through the backend (admin id = the logged-in user):
+//   GET  /api/admin/{id}/events                      every event
+//   POST /api/admin/{id}/events/{eventId}/approve    | reject | request-revision | unpublish
+//   GET  /api/admin/{id}/events/{eventId}/reviews    decision history
+//   GET  /api/admin/{id}/users,  PUT /users/{userId}/active
+//   POST /api/admin/{id}/organizers                  make a user an organizer
+// The backend sends the organizer a notification for every decision.
+import { api } from "./api"
+import { listUsers, requireSession, updateUser } from "./authService"
+import { effectiveStatus, getAllEvents, getOrganizerEvent } from "./organizerService"
 
 export const DECISIONS = {
   APPROVED: { label: "Approved and published", status: "PUBLISHED" },
@@ -13,17 +17,48 @@ export const DECISIONS = {
 
 export const MIN_FEEDBACK = 10
 
+// The backend calls it REVISION_REQUESTED, the pages REVISION_REQUIRED.
+const FROM_BACKEND = { APPROVED: "APPROVED", REJECTED: "REJECTED", REVISION_REQUESTED: "REVISION_REQUIRED" }
+const ENDPOINT = { APPROVED: "approve", REJECTED: "reject", REVISION_REQUIRED: "request-revision" }
+
+function base() {
+  return `/api/admin/${requireSession("ADMIN").id}`
+}
+
 /* ---------- events (Admin.viewAllEvents) ---------- */
 
 /** Everything the admin dashboard needs in one call. */
 export async function getAdminSummary() {
   const [events, users] = await Promise.all([getAllEvents(), listUsers()])
-  const withStatus = events.map((event) => ({ ...event, shownStatus: effectiveStatus(event) }))
+  const nameOf = (id) => users.find((user) => String(user.id) === String(id))?.name ?? "Unknown"
+
+  const withStatus = events.map((event) => ({
+    ...event,
+    organizerName: nameOf(event.organizerId),
+    shownStatus: effectiveStatus(event),
+  }))
   const count = (status) => withStatus.filter((event) => event.shownStatus === status).length
 
-  const reviews = withStatus
-    .flatMap((event) => (event.reviews ?? []).map((review) => ({ ...review, eventId: event.id, eventTitle: event.title })))
-    .sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt))
+  // Only events that were ever submitted can have reviews.
+  const reviewed = withStatus.filter((event) => event.submittedAt && event.status !== "PENDING_REVIEW")
+  const histories = await Promise.all(
+    reviewed.map((event) =>
+      api(`${base()}/events/${event.id}/reviews`)
+        .then((list) =>
+          list.map((review) => ({
+            id: review.id,
+            decision: FROM_BACKEND[review.decision] ?? review.decision,
+            feedback: review.feedback ?? "",
+            reviewedAt: review.reviewedAt,
+            reviewerName: nameOf(review.adminId),
+            eventId: event.id,
+            eventTitle: event.title,
+          }))
+        )
+        .catch(() => [])
+    )
+  )
+  const reviews = histories.flat().sort((a, b) => String(b.reviewedAt).localeCompare(String(a.reviewedAt)))
 
   return {
     events: withStatus,
@@ -40,6 +75,11 @@ export async function getAdminSummary() {
   }
 }
 
+/** Report numbers (GET /api/admin/{id}/reports). */
+export async function getReports() {
+  return api(`${base()}/reports`)
+}
+
 export async function getEventForReview(eventId) {
   const event = await getOrganizerEvent(eventId)
   return event ? { ...event, shownStatus: effectiveStatus(event) } : null
@@ -47,8 +87,11 @@ export async function getEventForReview(eventId) {
 
 /** Ids of the other events still waiting for a review. */
 export async function getPendingIds(exceptId) {
-  const { pendingEvents } = await getAdminSummary()
-  return pendingEvents.map((event) => event.id).filter((id) => String(id) !== String(exceptId))
+  const events = await getAllEvents()
+  return events
+    .filter((event) => event.status === "PENDING_REVIEW")
+    .map((event) => event.id)
+    .filter((id) => String(id) !== String(exceptId))
 }
 
 /** Event.validate(): automatic checks shown to the admin before deciding. */
@@ -82,59 +125,20 @@ export function validateEvent(event) {
   ]
 }
 
-/**
- * EventReview.approve() / requestRevision() / reject().
- * Approving also publishes the event (Admin.approveEvent + publishEvent).
- */
-export async function reviewEvent(eventId, decision, feedback, admin) {
-  const rule = DECISIONS[decision]
-  if (!rule) throw new Error("Choose a decision first.")
-
-  const event = await getOrganizerEvent(eventId)
-  if (!event) throw new Error("This event no longer exists.")
-  if (event.status !== "PENDING_REVIEW") throw new Error("This event was already reviewed.")
-
+/** Approve (also publishes) / request changes / reject. */
+export async function reviewEvent(eventId, decision, feedback) {
+  const endpoint = ENDPOINT[decision]
+  if (!endpoint) throw new Error("Choose a decision first.")
   const note = feedback.trim()
   if (decision !== "APPROVED" && note.length < MIN_FEEDBACK) {
     throw new Error("Tell the organizer why, in at least a short sentence.")
   }
-
-  const now = new Date().toISOString()
-  const review = {
-    id: `rv-${Date.now().toString(36)}`,
-    decision,
-    feedback: note,
-    reviewedAt: now,
-    reviewerName: admin?.name ?? "Admin",
-  }
-
-  const updated = await updateEvent(eventId, {
-    status: rule.status,
-    reviews: [...(event.reviews ?? []), review],
-    rejectionReason: decision === "APPROVED" ? undefined : note,
-    publishedAt: decision === "APPROVED" ? now : event.publishedAt,
-  })
-
-  await sendEmail({
-    eventId,
-    to: event.organizerEmail,
-    subject: `${rule.label}: ${event.title}`,
-    message: note || "Your event is now live on EventHub.",
-  })
-
-  return updated
+  return api(`${base()}/events/${eventId}/${endpoint}`, { method: "POST", body: { feedback: note || null } })
 }
 
-/** Takes a live or pending event down (Event.cancel) and tells the organizer why. */
+/** Takes a published event off the homepage (it goes back to DRAFT) and tells the organizer why. */
 export async function adminCancelEvent(eventId, reason) {
-  const updated = await cancelEvent(eventId, reason)
-  await sendEmail({
-    eventId,
-    to: updated.organizerEmail ?? "",
-    subject: `Cancelled by an admin: ${updated.title}`,
-    message: reason,
-  })
-  return updated
+  return api(`${base()}/events/${eventId}/unpublish`, { method: "POST", body: { feedback: reason.trim() } })
 }
 
 /* ---------- users (Admin.manageUsers) ---------- */
@@ -145,13 +149,19 @@ export const ROLES = [
   { role: "ADMIN", label: "Admin" },
 ]
 
+/** The backend can only turn a participant into an organizer. */
 export async function setUserRole(userId, role, admin) {
-  if (userId === admin.id) throw new Error("You can't change your own role.")
-  if (!ROLES.some((item) => item.role === role)) throw new Error("Unknown role.")
-  await updateUser(userId, { role })
+  if (String(userId) === String(admin.id)) throw new Error("You can't change your own role.")
+  if (role !== "ORGANIZER") throw new Error("The backend can only make a participant an organizer.")
+  const user = (await listUsers()).find((item) => String(item.id) === String(userId))
+  if (!user) throw new Error("This user no longer exists.")
+  await api(`${base()}/organizers`, {
+    method: "POST",
+    body: { email: user.email, organizationName: user.organizationName || user.name, department: null, bio: null },
+  })
 }
 
 export async function setUserSuspended(userId, suspended, admin) {
-  if (userId === admin.id) throw new Error("You can't suspend your own account.")
+  if (String(userId) === String(admin.id)) throw new Error("You can't suspend your own account.")
   await updateUser(userId, { suspended })
 }

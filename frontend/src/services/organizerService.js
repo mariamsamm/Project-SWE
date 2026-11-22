@@ -1,49 +1,37 @@
-// DEMO DATA. There is no backend yet, so organizer events live in this browser.
-// When the Spring Boot API is ready, replace the function bodies with fetch calls
-// (for example GET /api/organizer/events) and keep the same function names,
-// so no page has to change.
-import { organizerEvents, registrationsByMonth } from "../data/organizerEvents"
-import { getBookedCounts } from "./registrationService"
+// Organizer events through the backend (organizer id = the logged-in user):
+//   GET/POST       /api/organizers/{id}/events
+//   GET/PUT/DELETE /api/organizers/{id}/events/{eventId}
+//   POST           /api/organizers/{id}/events/{eventId}/submit
+//   POST           /api/images                (cover picture upload)
+// An admin opening an event uses /api/admin/{id}/events/{eventId} instead.
+import { api, toBackendDate } from "./api"
+import { getSession, requireSession } from "./authService"
+import { getCategories } from "./eventService"
+import { toBooking, toEvent } from "./mappers"
 
-const KEY = "eventhub.organizerEvents"
-
-function readAll() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(KEY) ?? "null")
-    return Array.isArray(parsed) ? parsed : organizerEvents
-  } catch {
-    return organizerEvents
-  }
+function organizerPath() {
+  const session = requireSession("ORGANIZER")
+  return `/api/organizers/${session.id}`
 }
 
-function writeAll(events) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(events))
-  } catch {
-    throw new Error("Your browser couldn't save this. Try a smaller image, or free up browser storage.")
-  }
+function withOwner(event) {
+  const session = getSession()
+  return session?.role === "ORGANIZER"
+    ? { organizerName: session.name, organizerEmail: session.email, ...event }
+    : event
 }
 
-/** Tickets that participants booked in this browser for one event. */
-function liveBookings(eventId) {
-  return Object.values(getBookedCounts(eventId)).reduce((sum, count) => sum + count, 0)
-}
-
-// Until events store their owner, every demo event belongs to the demo organizer.
-const DEMO_OWNER = { organizerName: "Mariam Samir", organizerEmail: "samir@eventhub.demo" }
-
-function withLiveCount(event) {
-  return { ...DEMO_OWNER, ...event, registrations: event.registrations + liveBookings(event.id) }
-}
-
-/** All events that belong to the organizer, with up-to-date registration counts. */
+/** All events of the logged-in organizer. */
 export async function getMyEvents() {
-  return readAll().map(withLiveCount)
+  const events = await api(`${organizerPath()}/events`)
+  return events.map(toEvent).map(withOwner)
 }
 
 /** Every event on the platform (admin pages). */
 export async function getAllEvents() {
-  return readAll().map(withLiveCount)
+  const admin = requireSession("ADMIN")
+  const events = await api(`/api/admin/${admin.id}/events`)
+  return events.map(toEvent)
 }
 
 /** A published event whose end time has passed is shown as COMPLETED. */
@@ -52,120 +40,137 @@ export function effectiveStatus(event) {
   return event.status
 }
 
-/** Changes some fields of one stored event and returns the updated event. */
-export async function updateEvent(eventId, patch) {
-  const events = readAll()
-  const event = events.find((item) => String(item.id) === String(eventId))
-  if (!event) throw new Error("This event no longer exists.")
-  const updated = { ...event, ...patch, updatedAt: new Date().toISOString() }
-  writeAll(events.map((item) => (item === event ? updated : item)))
-  return updated
-}
-
-/** A published or pending event can be cancelled. */
+/** Only an admin can take an event down (unpublish), so organizers get false. */
 export function canCancelEvent(event) {
-  return effectiveStatus(event) === "PUBLISHED" || event.status === "PENDING_REVIEW"
+  const session = getSession()
+  if (session?.role !== "ADMIN") return false
+  return effectiveStatus(event) === "PUBLISHED"
 }
 
-/** Event.cancel(): marks the event CANCELLED and keeps the reason. */
-export async function cancelEvent(eventId, reason) {
-  const event = await getOrganizerEvent(eventId)
-  if (!event) throw new Error("This event no longer exists.")
-  if (!canCancelEvent(event)) throw new Error("Only published or pending events can be cancelled.")
-  return updateEvent(eventId, {
-    status: "CANCELLED",
-    cancelReason: reason.trim(),
-    cancelledAt: new Date().toISOString(),
+/** The backend has no "cancel" for organizers: an admin unpublishes instead. */
+export async function cancelEvent() {
+  throw new Error("Only an admin can take a published event down. Ask an admin to unpublish it.")
+}
+
+/** Month labels of the last 6 months, oldest first. */
+function lastSixMonths() {
+  const now = new Date()
+  return Array.from({ length: 6 }, (_, i) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
+    return { key: `${date.getFullYear()}-${date.getMonth()}`, month: date.toLocaleString("en-GB", { month: "short" }) }
   })
 }
 
 /** Everything the organizer dashboard needs in one call. */
 export async function getDashboardSummary() {
+  const base = organizerPath()
   const events = await getMyEvents()
   const countByStatus = (status) => events.filter((event) => event.status === status).length
+
+  // Registrations per month, from the real bookings of every event.
+  const lists = await Promise.all(
+    events.map((event) => api(`${base}/events/${event.id}/registrations`).catch(() => []))
+  )
+  const months = lastSixMonths()
+  const counts = Object.fromEntries(months.map((m) => [m.key, 0]))
+  for (const booking of lists.flat().map(toBooking)) {
+    if (booking.status === "REJECTED" || booking.status === "CANCELLED") continue
+    const date = new Date(booking.createdAt)
+    const key = `${date.getFullYear()}-${date.getMonth()}`
+    if (key in counts) counts[key] += booking.quantity
+  }
 
   return {
     totalEvents: events.length,
     published: countByStatus("PUBLISHED"),
     pendingReview: countByStatus("PENDING_REVIEW"),
     totalRegistrations: events.reduce((sum, event) => sum + event.registrations, 0),
-    registrationsByMonth,
+    registrationsByMonth: months.map((m) => ({ month: m.month, count: counts[m.key] })),
     events,
   }
 }
 
-/** An organizer may only edit an event before it is published. */
+/** The backend lets organizers edit DRAFT and REVISION_REQUIRED events. */
 export function canEditEvent(event) {
-  return event.status === "DRAFT" || event.status === "REJECTED" || event.status === "REVISION_REQUIRED"
+  return event.status === "DRAFT" || event.status === "REVISION_REQUIRED"
 }
 
-/** Only a draft can be sent to the admin for review. */
+/** The same two statuses can be sent to the admin. */
 export function canSubmitForReview(event) {
-  return event.status === "DRAFT"
+  return canEditEvent(event)
 }
 
-/** Moves a draft to PENDING_REVIEW so an admin can approve or reject it. */
 export async function submitForReview(eventId) {
-  const events = readAll()
-  const event = events.find((item) => String(item.id) === String(eventId))
-  if (!event) throw new Error("This event no longer exists.")
-  if (!canSubmitForReview(event)) throw new Error("Only drafts can be submitted for review.")
-
-  writeAll(
-    events.map((item) =>
-      item === event ? { ...item, status: "PENDING_REVIEW", submittedAt: new Date().toISOString() } : item
-    )
-  )
+  return toEvent(await api(`${organizerPath()}/events/${eventId}/submit`, { method: "POST" }))
 }
 
-/** One of the organizer's events, or null if it doesn't exist. */
+/** One event (the organizer's own, or any event for an admin), or null. */
 export async function getOrganizerEvent(eventId) {
-  const event = readAll().find((item) => String(item.id) === String(eventId))
-  return event ? { ...DEMO_OWNER, ...event } : null
+  const session = requireSession()
+  const path =
+    session.role === "ADMIN"
+      ? `/api/admin/${session.id}/events/${eventId}`
+      : `/api/organizers/${session.id}/events/${eventId}`
+  try {
+    return withOwner(toEvent(await api(path)))
+  } catch (error) {
+    if (error.status === 404) return null
+    throw error
+  }
+}
+
+/** Deletes an event (only possible while it has no registrations). */
+export async function deleteEvent(eventId) {
+  await api(`${organizerPath()}/events/${eventId}`, { method: "DELETE" })
+}
+
+/** The create page keeps the picture as a data: URL; the backend wants an uploaded file. */
+async function uploadIfNeeded(imageUrl) {
+  if (!imageUrl) return null
+  if (!imageUrl.startsWith("data:") && !imageUrl.startsWith("blob:")) {
+    // Already uploaded (http://localhost:8080/uploads/x.jpg) or a /images/ file.
+    const at = imageUrl.indexOf("/uploads/")
+    return at >= 0 ? imageUrl.slice(at) : imageUrl
+  }
+  const blob = await (await fetch(imageUrl)).blob()
+  const form = new FormData()
+  form.append("file", blob, `cover.${blob.type.split("/")[1] ?? "jpg"}`)
+  const { path } = await api("/api/images", { method: "POST", form })
+  return path
 }
 
 /**
  * Creates a new event or updates an editable one.
- * `submit: false` saves it as DRAFT, `submit: true` sends it for review (PENDING_REVIEW).
+ * `submit: false` keeps it as DRAFT, `submit: true` also sends it for review.
  */
 export async function saveEvent(form, { submit, eventId = null }) {
-  const events = readAll()
-  const existing = eventId === null ? null : events.find((event) => String(event.id) === String(eventId))
+  const base = organizerPath()
+  const categories = await getCategories()
+  const category = categories.find((item) => item.name === form.category)
 
-  if (eventId !== null && !existing) throw new Error("This event no longer exists.")
-  if (existing && !canEditEvent(existing)) throw new Error("Published or pending events can't be edited.")
-
-  const now = new Date().toISOString()
-  const ticketCategories = form.tickets.map((ticket) => ({
-    name: ticket.name.trim(),
-    price: Number(ticket.price) || 0,
-    capacity: Number(ticket.capacity) || 0,
-  }))
-
-  const record = {
-    registrations: 0,
-    ...existing,
-    id: existing?.id ?? Math.max(0, ...events.map((event) => Number(event.id) || 0)) + 1,
-    title: form.title.trim(),
-    category: form.category,
-    description: form.description.trim(),
-    location: form.venue.trim(),
-    address: form.address.trim(),
-    startDate: form.startDate,
-    endDate: form.endDate,
-    registrationDeadline: form.registrationDeadline,
-    capacity: ticketCategories.reduce((sum, ticket) => sum + ticket.capacity, 0),
+  const body = {
+    name: form.title.trim(),
+    categoryId: category?.id ?? null,
+    imagePath: await uploadIfNeeded(form.imageUrl),
+    startDateTime: toBackendDate(form.startDate),
+    endDateTime: toBackendDate(form.endDate),
+    registrationDeadline: toBackendDate(form.registrationDeadline),
+    about: form.description.trim(),
+    tickets: form.tickets.map((ticket) => ({
+      name: ticket.name.trim(),
+      price: Number(ticket.price) || 0,
+      capacity: Number(ticket.capacity) || 0,
+    })),
+    venue: { name: form.venue.trim(), location: form.address.trim(), imagePath: null },
+    facilities: form.facilities ?? [],
     approvalMode: form.approvalMode,
-    ticketCategories,
-    facilities: form.facilities,
-    imageUrl: form.imageUrl,
-    status: submit ? "PENDING_REVIEW" : "DRAFT",
-    rejectionReason: undefined,
-    createdAt: existing?.createdAt ?? now,
-    updatedAt: now,
-    submittedAt: submit ? now : existing?.submittedAt,
   }
 
-  writeAll(existing ? events.map((event) => (event === existing ? record : event)) : [...events, record])
-  return record
+  const saved =
+    eventId === null || eventId === undefined
+      ? await api(`${base}/events`, { method: "POST", body })
+      : await api(`${base}/events/${eventId}`, { method: "PUT", body })
+
+  if (submit) return toEvent(await api(`${base}/events/${saved.id}/submit`, { method: "POST" }))
+  return toEvent(saved)
 }
