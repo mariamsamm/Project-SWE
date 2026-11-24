@@ -1,67 +1,15 @@
-// DEMO AUTH. There is no backend yet, so accounts live in this browser only.
-// Passwords are never stored: only a salted SHA-256 digest is kept. When the
-// Spring Boot API exists, replace the bodies of signup/login/logout with fetch
-// calls and keep the same function signatures so no page has to change.
+// AUTH through the Spring Boot backend (POST /api/auth/login, /api/auth/signup).
+// The backend checks the password with BCrypt. The logged-in user (id + role) is kept
+// in sessionStorage, and the other services put that id in their URLs.
+import { api } from "./api"
+import { toUser } from "./mappers"
 
-const USERS_KEY = "eventhub.users"
 const SESSION_KEY = "eventhub.session"
 
-// Public throwaway account so the app can be demoed immediately.
+// Demo accounts from backend/database/eventhub_database.sql (shown on the login page).
 export const DEMO_ACCOUNT = { email: "mariam@eventhub.demo", password: "Demo1234!" }
 export const DEMO_ORGANIZER = { email: "samir@eventhub.demo", password: "Organizer123!" }
 export const DEMO_ADMIN = { email: "layla@eventhub.demo", password: "Admin123!" }
-
-function readJson(storage, key, fallback) {
-  try {
-    const raw = storage.getItem(key)
-    return raw ? JSON.parse(raw) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function writeJson(storage, key, value) {
-  try {
-    storage.setItem(key, JSON.stringify(value))
-  } catch {
-    throw new Error("Your browser blocked storage, so the demo cannot save data.")
-  }
-}
-
-async function digest(salt, password) {
-  if (!globalThis.crypto?.subtle) {
-    throw new Error("Secure hashing needs https or localhost.")
-  }
-  const bytes = new TextEncoder().encode(`${salt}:${password}`)
-  const hash = await crypto.subtle.digest("SHA-256", bytes)
-  return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("")
-}
-
-function randomId() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, "0")).join("")
-}
-
-// Demo accounts that always exist. They match the users table in
-// backend/database/eventhub_database.sql. The role decides which page opens after login.
-const DEMO_USERS = [
-  { id: "u-demo", name: "Mariam Mohamed", ...DEMO_ACCOUNT, dateOfBirth: "2000-05-14", role: "PARTICIPANT" },
-  { id: "u-organizer", name: "Mariam Samir", ...DEMO_ORGANIZER, dateOfBirth: "1995-07-21", role: "ORGANIZER" },
-  { id: "u-admin", name: "Layla Shaheen", ...DEMO_ADMIN, dateOfBirth: "1990-03-10", role: "ADMIN" },
-]
-
-async function seedDemoUser() {
-  const users = readJson(localStorage, USERS_KEY, [])
-  let changed = false
-  for (const demo of DEMO_USERS) {
-    if (users.some((user) => user.email === demo.email)) continue
-    const salt = randomId()
-    const { password, ...profile } = demo
-    users.push({ ...profile, salt, hash: await digest(salt, password) })
-    changed = true
-  }
-  if (changed) writeJson(localStorage, USERS_KEY, users)
-  return users
-}
 
 /* ---------- validation (also used by the forms) ---------- */
 
@@ -152,68 +100,60 @@ export async function signup(values) {
     error.fieldErrors = errors
     throw error
   }
-  const users = await seedDemoUser()
-  const email = normalizeEmail(values.email)
-  if (users.some((user) => user.email === email)) {
-    const error = new Error("An account with this email already exists.")
-    error.fieldErrors = { email: "An account with this email already exists." }
+  try {
+    const user = await api("/api/auth/signup", {
+      method: "POST",
+      body: {
+        fullName: values.name.trim(),
+        email: normalizeEmail(values.email),
+        phone: values.phone?.trim() || null,
+        dateOfBirth: values.dateOfBirth,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
+      },
+    })
+    return setSession(toUser(user))
+  } catch (error) {
+    if (error.status === 409) error.fieldErrors = { email: error.message }
     throw error
   }
-  const salt = randomId()
-  const user = {
-    id: `u-${randomId()}`,
-    name: values.name.trim(),
-    email,
-    dateOfBirth: values.dateOfBirth,
-    role: "PARTICIPANT",
-    salt,
-    hash: await digest(salt, values.password),
-  }
-  writeJson(localStorage, USERS_KEY, [...users, user])
-  return setSession(user)
 }
 
 export async function login(emailInput, password) {
-  const users = await seedDemoUser()
-  const email = normalizeEmail(emailInput)
-  const user = users.find((item) => item.email === email)
-  // Same message for "no such user" and "wrong password" on purpose.
-  const failure = new Error("Incorrect email or password.")
-  if (!user) throw failure
-  if ((await digest(user.salt, password)) !== user.hash) throw failure
-  if (user.suspended) throw new Error("This account has been suspended. Please contact an admin.")
-  return setSession(user)
+  const user = await api("/api/auth/login", {
+    method: "POST",
+    body: { email: normalizeEmail(emailInput), password },
+  })
+  return setSession(toUser(user))
 }
 
 export function logout() {
   setSession(null)
 }
 
-/* ---------- user management (admin) ---------- */
-
-/** Every account, without password data. */
-export async function listUsers() {
-  const users = await seedDemoUser()
-  return users.map((user) => ({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role ?? "PARTICIPANT",
-    suspended: Boolean(user.suspended),
-  }))
+/** The logged-in user, or an error if nobody is logged in. */
+export function requireSession(role) {
+  const session = getSession()
+  if (!session) throw new Error("Please log in first.")
+  if (role && session.role !== role) throw new Error("Your account can't do this.")
+  return session
 }
 
-/** Changes a user's role or suspended flag. */
-export async function updateUser(userId, { role, suspended }) {
-  const users = await seedDemoUser()
-  if (!users.some((user) => user.id === userId)) throw new Error("This user no longer exists.")
-  writeJson(
-    localStorage,
-    USERS_KEY,
-    users.map((user) =>
-      user.id === userId
-        ? { ...user, role: role ?? user.role ?? "PARTICIPANT", suspended: suspended ?? Boolean(user.suspended) }
-        : user
-    )
-  )
+/* ---------- user management (admin) ---------- */
+
+/** Every account (GET /api/admin/{adminId}/users). */
+export async function listUsers() {
+  const admin = requireSession("ADMIN")
+  const users = await api(`/api/admin/${admin.id}/users`)
+  return users.map(toUser)
+}
+
+/** Activates / deactivates a user (PUT /api/admin/{adminId}/users/{userId}/active). */
+export async function updateUser(userId, { suspended }) {
+  const admin = requireSession("ADMIN")
+  if (suspended === undefined) return
+  await api(`/api/admin/${admin.id}/users/${userId}/active`, {
+    method: "PUT",
+    body: { active: !suspended },
+  })
 }

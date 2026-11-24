@@ -1,134 +1,24 @@
-// DEMO DATA. Registrations for the organizer pages live in this browser:
-//  - sample participants (data/demoRegistrations.js), saved under KEY
-//  - real bookings made on this browser by participants (registrationService)
-// When the Spring Boot API is ready, replace the function bodies with fetch calls
-// (for example GET /api/events/{id}/registrations) and keep the same function names.
-import { buildDemoRegistrations, DEFAULT_FORM_FIELDS } from "../data/demoRegistrations"
-import { listUsers } from "./authService"
-import { sendTicket } from "./notificationService"
-import { effectiveStatus, getAllEvents, getOrganizerEvent, updateEvent } from "./organizerService"
+// Registrations and check-in of one event, through the backend:
+//   GET  /api/organizers/{id}/events/{eventId}/registrations
+//   POST /api/organizers/{id}/registrations/{registrationId}/approve
+//   POST /api/organizers/{id}/registrations/{registrationId}/reject   { reason }
+//   POST /api/organizers/{id}/events/{eventId}/check-in               { ticketCode }
+import { DEFAULT_FORM_FIELDS } from "../data/demoRegistrations"
+import { api } from "./api"
+import { requireSession } from "./authService"
+import { toRow } from "./mappers"
+import { effectiveStatus, getMyEvents } from "./organizerService"
 
-const KEY = "eventhub.eventRegistrations"
-const LIVE_KEY = "eventhub.registrations" // written by registrationService
-
-/* ---------- storage ---------- */
-
-function readJson(key, fallback) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) ?? "null")
-    return parsed ?? fallback
-  } catch {
-    return fallback
-  }
-}
-
-function writeJson(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value))
-  } catch {
-    throw new Error("Your browser couldn't save this change. Free up browser storage and try again.")
-  }
-}
-
-/** Sample registrations of one event (created the first time they are needed). */
-function demoRows(event) {
-  const store = readJson(KEY, {})
-  if (!Array.isArray(store[event.id])) {
-    const canHaveRegistrations = ["PUBLISHED", "CANCELLED"].includes(event.status)
-    store[event.id] = canHaveRegistrations ? buildDemoRegistrations(event) : []
-    writeJson(KEY, store)
-  }
-  return store[event.id]
-}
-
-function saveDemoRows(eventId, rows) {
-  writeJson(KEY, { ...readJson(KEY, {}), [eventId]: rows })
-}
-
-function newTicketCode() {
-  const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), (byte) => byte.toString(16).padStart(2, "0"))
-    .join("")
-    .toUpperCase()
-  return `EH-${hex.slice(0, 4)}-${hex.slice(4)}`
-}
-
-/** Real bookings use CONFIRMED where the organizer pages say APPROVED. */
-async function liveRows(eventId) {
-  const live = readJson(LIVE_KEY, [])
-  const mine = (Array.isArray(live) ? live : []).filter((item) => String(item.eventId) === String(eventId))
-  if (mine.length === 0) return []
-  const users = await listUsers()
-
-  return mine.map((item) => {
-    const user = users.find((candidate) => candidate.id === item.userId)
-    return {
-      id: item.id,
-      eventId: String(item.eventId),
-      live: true,
-      name: user?.name ?? "Participant",
-      email: user?.email ?? "",
-      ticketName: (item.items ?? []).map((ticket) => ticket.name).join(", ") || "Ticket",
-      quantity: item.quantity ?? 1,
-      total: item.total ?? 0,
-      status: item.status === "CONFIRMED" ? "APPROVED" : item.status,
-      ticketCode: item.ticketCode ?? null,
-      checkedInAt: item.checkedInAt ?? null,
-      rejectionReason: item.rejectionReason,
-      answers: item.answers ?? {},
-      createdAt: item.createdAt,
-    }
-  })
-}
-
-/** Saves changes to rows, each in the place it came from. */
-function saveRows(event, changed) {
-  const byId = new Map(changed.map((row) => [row.id, row]))
-
-  if (changed.some((row) => !row.live)) {
-    const rows = demoRows(event).map((row) => byId.get(row.id) ?? row)
-    saveDemoRows(event.id, rows)
-  }
-
-  if (changed.some((row) => row.live)) {
-    const live = readJson(LIVE_KEY, [])
-    writeJson(
-      LIVE_KEY,
-      live.map((item) => {
-        const row = byId.get(item.id)
-        if (!row) return item
-        return {
-          ...item,
-          status: row.status === "APPROVED" ? "CONFIRMED" : row.status,
-          ticketCode: row.ticketCode ?? item.ticketCode,
-          checkedInAt: row.checkedInAt,
-          rejectionReason: row.rejectionReason,
-        }
-      })
-    )
-  }
-}
-
-/** Keeps the event's registration total (dashboard cards) in step with the sample rows. */
-async function syncSeatCount(event) {
-  const seats = demoRows(event)
-    .filter((row) => row.status === "PENDING" || row.status === "APPROVED")
-    .reduce((sum, row) => sum + row.quantity, 0)
-  if (seats !== event.registrations) await updateEvent(event.id, { registrations: seats })
-}
-
-async function requireEvent(eventId) {
-  const event = await getOrganizerEvent(eventId)
-  if (!event) throw new Error("This event no longer exists.")
-  return event
+function base() {
+  return `/api/organizers/${requireSession("ORGANIZER").id}`
 }
 
 /* ---------- registrations (EventOrganizer.viewRegistrations) ---------- */
 
 /** Every registration of one event, newest first. */
 export async function listRegistrations(eventId) {
-  const event = await requireEvent(eventId)
-  const rows = [...demoRows(event), ...(await liveRows(eventId))]
-  return rows.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+  const list = await api(`${base()}/events/${eventId}/registrations`)
+  return list.map(toRow).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
 }
 
 /** Seats counted by status, plus check-in progress. */
@@ -147,81 +37,57 @@ export function summarize(registrations, capacity) {
     rejected: seats("REJECTED"),
     checkedIn,
     registered: approved + pending,
-    seatsLeft: Math.max(0, capacity - approved),
+    seatsLeft: Math.max(0, capacity - approved - pending),
   }
 }
 
-/**
- * EventOrganizer.approveParticipant(): approves one or more registrations,
- * creates their tickets and "emails" them. Stops if the event would be over capacity.
- */
+/** Confirms pending registrations. The backend makes the ticket code and notifies the participant. */
 export async function approveRegistrations(eventId, ids) {
-  const event = await requireEvent(eventId)
-  const all = await listRegistrations(eventId)
-  const chosen = all.filter((row) => ids.includes(row.id) && row.status !== "APPROVED" && row.status !== "CANCELLED")
-  if (chosen.length === 0) return 0
-
-  const needed = chosen.reduce((sum, row) => sum + row.quantity, 0)
-  const { seatsLeft } = summarize(all, event.capacity)
-  if (needed > seatsLeft) {
-    throw new Error(
-      seatsLeft === 0
-        ? "This event is full, so nobody else can be approved."
-        : `Only ${seatsLeft} ${seatsLeft === 1 ? "seat is" : "seats are"} left, but you selected ${needed}.`
-    )
+  const rows = await listRegistrations(eventId)
+  const chosen = rows.filter((row) => ids.includes(row.id) && row.status === "PENDING")
+  for (const row of chosen) {
+    await api(`${base()}/registrations/${row.id}/approve`, { method: "POST" })
   }
-
-  const updated = chosen.map((row) => ({
-    ...row,
-    status: "APPROVED",
-    ticketCode: row.ticketCode ?? newTicketCode(),
-    rejectionReason: undefined,
-    decidedAt: new Date().toISOString(),
-  }))
-  saveRows(event, updated)
-  await syncSeatCount(event)
-  await Promise.all(
-    updated.map((row) =>
-      sendTicket({ eventId, to: row.email, ticketCode: row.ticketCode, eventTitle: event.title })
-    )
-  )
-  return updated.length
-}
-
-/** EventOrganizer.rejectParticipant(): rejects registrations and cancels their tickets. */
-export async function rejectRegistrations(eventId, ids, reason = "") {
-  const event = await requireEvent(eventId)
-  const all = await listRegistrations(eventId)
-  const chosen = all.filter((row) => ids.includes(row.id) && row.status !== "REJECTED" && row.status !== "CANCELLED")
-  if (chosen.some((row) => row.checkedInAt)) {
-    throw new Error("Someone you selected has already checked in, so they can't be rejected.")
-  }
-
-  saveRows(
-    event,
-    chosen.map((row) => ({
-      ...row,
-      status: "REJECTED",
-      rejectionReason: reason.trim() || undefined,
-      decidedAt: new Date().toISOString(),
-    }))
-  )
-  await syncSeatCount(event)
   return chosen.length
 }
 
-/** Sends the ticket email again (Notification.sendTicket). */
-export async function resendTicket(eventId, registrationId) {
-  const event = await requireEvent(eventId)
-  const row = (await listRegistrations(eventId)).find((item) => item.id === registrationId)
-  if (!row || row.status !== "APPROVED") throw new Error("Only approved registrations have a ticket.")
-  await sendTicket({ eventId, to: row.email, ticketCode: row.ticketCode, eventTitle: event.title })
+/** Rejects pending registrations (the reason is optional). */
+export async function rejectRegistrations(eventId, ids, reason = "") {
+  const rows = await listRegistrations(eventId)
+  const chosen = rows.filter((row) => ids.includes(row.id) && row.status === "PENDING")
+  if (chosen.length === 0 && ids.length > 0) {
+    throw new Error("Only pending registrations can be rejected.")
+  }
+  for (const row of chosen) {
+    await api(`${base()}/registrations/${row.id}/reject`, {
+      method: "POST",
+      body: { reason: reason.trim() || null },
+    })
+  }
+  return chosen.length
+}
+
+/** The backend sends the ticket in a notification when it confirms a booking. */
+export async function resendTicket() {
+  throw new Error("The ticket was already sent to the participant's notifications when they were confirmed.")
 }
 
 /* ---------- registration form (RegistrationForm + FormField) ---------- */
 
+// The backend has no table for extra questions yet, so they stay in this browser.
+const FORM_KEY = "eventhub.registrationForms"
+
+function readForms() {
+  try {
+    return JSON.parse(localStorage.getItem(FORM_KEY) ?? "{}") ?? {}
+  } catch {
+    return {}
+  }
+}
+
 export function getFormFields(event) {
-  return Array.isArray(event.registrationForm) ? event.registrationForm : DEFAULT_FORM_FIELDS
+  const saved = readForms()[event.id]
+  return Array.isArray(saved) ? saved : DEFAULT_FORM_FIELDS
 }
 
 /** Returns a message when the form itself is set up wrongly, otherwise "". */
@@ -250,7 +116,11 @@ export async function saveFormFields(eventId, fields) {
     required: Boolean(field.required),
     options: field.type === "select" ? field.options.map((option) => option.trim()).filter(Boolean) : [],
   }))
-  await updateEvent(eventId, { registrationForm: cleaned })
+  try {
+    localStorage.setItem(FORM_KEY, JSON.stringify({ ...readForms(), [eventId]: cleaned }))
+  } catch {
+    throw new Error("Your browser couldn't save this change.")
+  }
   return cleaned
 }
 
@@ -316,7 +186,7 @@ export function normalizeCode(input) {
 
 /** Events that can check people in. */
 export async function listCheckInEvents() {
-  const events = await getAllEvents()
+  const events = await getMyEvents()
   return events.filter((event) => event.status === "PUBLISHED")
 }
 
@@ -327,42 +197,29 @@ export async function listCheckInEvents() {
 export async function checkInByCode(eventId, input) {
   const code = normalizeCode(input)
   if (!code) return { result: "INVALID", code }
-
-  const event = await requireEvent(eventId)
-  const rows = await listRegistrations(eventId)
-  const row = rows.find((item) => item.ticketCode === code)
-
-  if (!row) {
-    // Maybe the ticket is real but belongs to another event.
-    for (const other of await getAllEvents()) {
-      if (String(other.id) === String(eventId)) continue
-      const match = (await listRegistrations(other.id)).find((item) => item.ticketCode === code)
-      if (match) return { result: "WRONG_EVENT", code, registration: match, otherEvent: other }
-    }
-    return { result: "INVALID", code }
+  try {
+    const saved = await api(`${base()}/events/${eventId}/check-in`, { method: "POST", body: { ticketCode: code } })
+    return { result: "OK", code, registration: toRow(saved) }
+  } catch (error) {
+    const text = error.message.toLowerCase()
+    if (error.status === 404) return { result: "INVALID", code, message: error.message }
+    if (text.includes("already used")) return { result: "ALREADY", code, message: error.message }
+    if (text.includes("another event")) return { result: "WRONG_EVENT", code, message: error.message }
+    if (text.includes("not confirmed")) return { result: "NOT_APPROVED", code, message: error.message }
+    throw error
   }
-
-  if (row.status !== "APPROVED") return { result: "NOT_APPROVED", code, registration: row }
-  if (row.checkedInAt) return { result: "ALREADY", code, registration: row }
-
-  const updated = { ...row, checkedInAt: new Date().toISOString() }
-  saveRows(event, [updated])
-  return { result: "OK", code, registration: updated }
 }
 
-/** Checks someone in from the attendee list (no code needed). */
+/** Checks someone in from the attendee list (no typing needed). */
 export async function checkInById(eventId, registrationId) {
   const row = (await listRegistrations(eventId)).find((item) => item.id === registrationId)
   if (!row?.ticketCode) throw new Error("This registration has no ticket.")
   return checkInByCode(eventId, row.ticketCode)
 }
 
-/** Undoes a check-in made by mistake. */
-export async function undoCheckIn(eventId, registrationId) {
-  const event = await requireEvent(eventId)
-  const row = (await listRegistrations(eventId)).find((item) => item.id === registrationId)
-  if (!row) throw new Error("This registration no longer exists.")
-  saveRows(event, [{ ...row, checkedInAt: null }])
+/** The backend keeps check-ins for good, so they can't be undone from here. */
+export async function undoCheckIn() {
+  throw new Error("Check-ins are saved for good and can't be undone.")
 }
 
 export function canCheckIn(event) {
