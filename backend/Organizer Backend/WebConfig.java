@@ -1,4 +1,4 @@
-package com.eventsapp.organizer.config;
+package com.eventsapp.config;
 
 import com.eventsapp.organizer.service.FileStorageService;
 import org.springframework.context.annotation.Configuration;
@@ -22,11 +22,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations(storage.getUploadDir().toUri().toString());
     }
 
-    /** Lets the frontend (running on another port) call this API during development. */
+    /** Lets the React frontend (another port or another site) call this API. Restrict the origins before going live. */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins("*")
-                .allowedMethods("GET", "POST", "PUT", "DELETE");
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
     }
 }
