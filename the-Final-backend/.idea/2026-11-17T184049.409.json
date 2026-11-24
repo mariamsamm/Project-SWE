@@ -1,5 +1,0 @@
-{
-  "status": 409,
-  "message": "Only pending registrations can be confirmed, this one is REJECTED.",
-  "details": []
-}
