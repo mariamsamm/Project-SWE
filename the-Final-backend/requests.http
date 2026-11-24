@@ -1,0 +1,246 @@
+### =====================================================================
+### EventHub backend. Steps: 1) run database/eventhub_database.sql in MySQL Workbench
+###                         2) put your MySQL password in application.properties
+###                         3) run EventHubApplication, then press the green arrow on each request.
+###
+### Demo accounts (from the .sql file):
+###   admin         id 1   layla@eventhub.demo         Admin123!
+###   organizer     id 2   samir@eventhub.demo         Organizer123!
+###   participants  id 3   mariam@eventhub.demo        Demo1234!
+###                 id 4   khaled@eventhub.demo        Demo1234!
+###                 id 5   abdelrahman@eventhub.demo   Demo1234!
+### Re-run the .sql file any time to go back to a clean copy of the data.
+### =====================================================================
+
+### ---------- AUTH ----------
+
+### Log in (same request for admin / organizer / participant - read "role" in the answer)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{ "email": "samir@eventhub.demo", "password": "Organizer123!" }
+
+### Sign up a new participant (/api/auth/signup does the same)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Sara Ahmed",
+  "email": "sara@example.com",
+  "phone": "01012345678",
+  "dateOfBirth": "2001-03-15",
+  "password": "Sara@12345",
+  "confirmPassword": "Sara@12345"
+}
+
+### Is this email already used?
+GET http://localhost:8080/api/auth/email-exists?email=sara@example.com
+
+### One user
+GET http://localhost:8080/api/users/3
+
+### Update profile
+PUT http://localhost:8080/api/users/3/profile
+Content-Type: application/json
+
+{ "fullName": "Mariam Mohamed", "email": "mariam@eventhub.demo", "phone": "01000000003" }
+
+### ---------- HOMEPAGE (no login) ----------
+
+### Category dropdown
+GET http://localhost:8080/api/categories
+
+### Published events (optional filter ?categoryId=2)
+GET http://localhost:8080/api/events
+
+###
+GET http://localhost:8080/api/events?categoryId=2
+
+### One published event (tickets show seatsLeft)
+GET http://localhost:8080/api/events/2
+
+### ---------- ORGANIZER (organizer id 2) ----------
+
+### My events
+GET http://localhost:8080/api/organizers/2/events
+
+### Dashboard numbers (same as the event_stats view)
+GET http://localhost:8080/api/organizers/2/stats
+
+### Upload a picture (choose a real file path on your computer)
+POST http://localhost:8080/api/images
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="poster.jpg"
+Content-Type: image/jpeg
+
+"C:\Users\Kaled\OneDrive\Desktop\WhatsApp Image 2025-10-14 at 20.58.57_edd67c50.jpg"
+--Boundary--
+
+### Create an event (status DRAFT). capacity is not sent: it is the sum of the ticket capacities.
+POST http://localhost:8080/api/organizers/2/events
+Content-Type: application/json
+
+{
+  "name": "Photography Workshop",
+  "categoryId": 2,
+  "imagePath": null,
+  "startDateTime": "2027-03-10T18:00:00",
+  "endDateTime": "2027-03-10T21:00:00",
+  "registrationDeadline": "2027-03-08T23:59:00",
+  "about": "Learn the basics of photography.",
+  "tickets": [
+    { "name": "Student", "price": 50.00, "capacity": 40 },
+    { "name": "Standard", "price": 100.00, "capacity": 20 }
+  ],
+  "venue": { "name": "Media Lab", "location": "Building D, floor 1", "imagePath": null },
+  "facilities": ["Wi-Fi", "Projector"],
+  "approvalMode": "MANUAL"
+}
+
+### Get one of my events (the new one gets id 7)
+GET http://localhost:8080/api/organizers/2/events/7
+
+### Update it (only DRAFT or REVISION_REQUIRED; same body as create)
+PUT http://localhost:8080/api/organizers/2/events/7
+Content-Type: application/json
+
+{
+  "name": "Photography Workshop 2027",
+  "categoryId": 2,
+  "startDateTime": "2027-03-10T18:00:00",
+  "endDateTime": "2027-03-10T21:00:00",
+  "registrationDeadline": "2027-03-08T23:59:00",
+  "about": "Updated description.",
+  "tickets": [
+    { "name": "Student", "price": 55.00, "capacity": 40 },
+    { "name": "Standard", "price": 100.00, "capacity": 25 }
+  ],
+  "venue": { "name": "Media Lab", "location": "Building D, floor 1" },
+  "facilities": ["Wi-Fi"],
+  "approvalMode": "AUTOMATIC"
+}
+
+### Send it to the admin (DRAFT -> PENDING_REVIEW)
+POST http://localhost:8080/api/organizers/2/events/7/submit
+
+### The draft event 5 (Career Fair) can also be submitted
+POST http://localhost:8080/api/organizers/2/events/5/submit
+
+### Delete an event (not possible once it has registrations)
+DELETE http://localhost:8080/api/organizers/2/events/7
+
+### ---------- ADMIN (admin id 1) ----------
+
+### Events waiting for review (event 4 AI Hackathon is waiting in the demo data)
+GET http://localhost:8080/api/admin/1/events?status=PENDING_REVIEW
+
+### All events
+GET http://localhost:8080/api/admin/1/events
+
+### One event
+GET http://localhost:8080/api/admin/1/events/4
+
+### Approve + publish (the body is optional)
+POST http://localhost:8080/api/admin/1/events/4/approve
+Content-Type: application/json
+
+{ "feedback": "Looks good." }
+
+### Reject (reason required)
+POST http://localhost:8080/api/admin/1/events/7/reject
+Content-Type: application/json
+
+{ "feedback": "The description is not clear." }
+
+### Ask the organizer for changes (feedback required)
+POST http://localhost:8080/api/admin/1/events/7/request-revision
+Content-Type: application/json
+
+{ "feedback": "Please add the real venue address." }
+
+### Take a published event off the homepage (it goes back to DRAFT)
+POST http://localhost:8080/api/admin/1/events/3/unpublish
+Content-Type: application/json
+
+{ "feedback": "Reported by a user." }
+
+### History of decisions on one event
+GET http://localhost:8080/api/admin/1/events/6/reviews
+
+### All users
+GET http://localhost:8080/api/admin/1/users
+
+### Deactivate / activate a user
+PUT http://localhost:8080/api/admin/1/users/4/active
+Content-Type: application/json
+
+{ "active": false }
+
+### Organizers
+GET http://localhost:8080/api/admin/1/organizers
+
+### Approve an existing user (they must have signed up first) as an organizer
+POST http://localhost:8080/api/admin/1/organizers
+Content-Type: application/json
+
+{
+  "email": "sara@example.com",
+  "organizationName": "Cinema Club",
+  "department": "Student Activities",
+  "bio": "Runs movie nights."
+}
+
+### Report numbers
+GET http://localhost:8080/api/admin/1/reports
+
+### ---------- PARTICIPANT (participant id 5) ----------
+
+### Register for event 2 (AUTOMATIC: confirmed at once). items = ticket type id + quantity (1-10)
+POST http://localhost:8080/api/participants/5/registrations
+Content-Type: application/json
+
+{ "eventId": 2, "items": [ { "ticketCategoryId": 3, "quantity": 1 } ] }
+
+### Register for a MANUAL event (event 4 after the admin approved it): status PENDING
+POST http://localhost:8080/api/participants/3/registrations
+Content-Type: application/json
+
+{ "eventId": 4, "items": [ { "ticketCategoryId": 7, "quantity": 1 } ] }
+
+### My tickets (each has ticketCode for the QR code)
+GET http://localhost:8080/api/participants/5/registrations
+
+### Cancel a registration
+POST http://localhost:8080/api/participants/5/registrations/7/cancel
+
+### ---------- ORGANIZER: registrations and check-in (organizer id 2) ----------
+
+### Participants of event 1 (the demo data has a pending one: registration 2)
+GET http://localhost:8080/api/organizers/2/events/1/registrations
+
+### Confirm a pending registration (notifies the participant with the ticket code)
+POST http://localhost:8080/api/organizers/2/registrations/2/approve
+
+### Reject a registration (the body and the reason are optional)
+POST http://localhost:8080/api/organizers/2/registrations/2/reject
+Content-Type: application/json
+
+{ "reason": "The event is for members only." }
+
+### Check-in at the door: scan a ticket code (registration 5 of event 2 is confirmed and not used yet)
+POST http://localhost:8080/api/organizers/2/events/2/check-in
+Content-Type: application/json
+
+{ "ticketCode": "EH-5E6F-7A8B" }
+
+### ---------- NOTIFICATIONS (any user id) ----------
+
+GET http://localhost:8080/api/users/2/notifications
+
+###
+GET http://localhost:8080/api/users/2/notifications/unread-count
+
+###
+POST http://localhost:8080/api/users/2/notifications/read-all
