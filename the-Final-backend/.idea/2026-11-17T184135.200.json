@@ -1,0 +1,45 @@
+{
+  "id": 3,
+  "organizerId": 2,
+  "name": "Sports Tournament",
+  "categoryId": 3,
+  "categoryName": "Sports",
+  "imagePath": "/images/sports1.jpg",
+  "startDateTime": "2026-12-10T11:00:00",
+  "endDateTime": "2026-12-11T19:00:00",
+  "registrationDeadline": "2026-12-08T01:59:00",
+  "about": "Join a day of team competitions and sporting activities.",
+  "tickets": [
+    {
+      "id": 5,
+      "name": "General Admission",
+      "price": 80.00,
+      "capacity": 80,
+      "seatsLeft": 78
+    },
+    {
+      "id": 6,
+      "name": "Premium Seating",
+      "price": 160.00,
+      "capacity": 20,
+      "seatsLeft": 20
+    }
+  ],
+  "venue": {
+    "name": "University Sports Courts",
+    "location": "Sports complex",
+    "imagePath": null
+  },
+  "facilities": [
+    "Changing rooms",
+    "First aid"
+  ],
+  "capacity": 100,
+  "seatsLeft": 98,
+  "approvalMode": "AUTOMATIC",
+  "status": "DRAFT",
+  "adminFeedback": "Reported by a user.",
+  "submittedAt": "2026-10-10T12:00:00",
+  "publishedAt": null,
+  "registrationOpen": false
+}

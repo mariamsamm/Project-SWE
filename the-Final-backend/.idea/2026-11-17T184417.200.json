@@ -1,0 +1,130 @@
+[
+  {
+    "id": 2,
+    "organizerId": 2,
+    "name": "Web Development Workshop",
+    "categoryId": 2,
+    "categoryName": "Education",
+    "imagePath": "/images/workshop.jpg",
+    "startDateTime": "2026-12-05T12:00:00",
+    "endDateTime": "2026-12-05T16:00:00",
+    "registrationDeadline": "2026-12-04T01:59:00",
+    "about": "Learn the basics of building websites with React.",
+    "tickets": [
+      {
+        "id": 3,
+        "name": "Student Admission",
+        "price": 75.00,
+        "capacity": 20,
+        "seatsLeft": 18
+      },
+      {
+        "id": 4,
+        "name": "Standard Admission",
+        "price": 120.00,
+        "capacity": 10,
+        "seatsLeft": 8
+      }
+    ],
+    "venue": {
+      "name": "Computer Lab",
+      "location": "Building B, floor 2",
+      "imagePath": null
+    },
+    "facilities": [
+      "Laptops provided",
+      "Wi-Fi"
+    ],
+    "capacity": 30,
+    "seatsLeft": 26,
+    "approvalMode": "AUTOMATIC",
+    "status": "PUBLISHED",
+    "adminFeedback": "",
+    "submittedAt": "2026-10-05T12:00:00",
+    "publishedAt": "2026-10-06T15:00:00",
+    "registrationOpen": true
+  },
+  {
+    "id": 1,
+    "organizerId": 2,
+    "name": "Christmas Celebration",
+    "categoryId": 1,
+    "categoryName": "Entertainment",
+    "imagePath": "/images/christmas.jpg",
+    "startDateTime": "2026-12-23T14:00:00",
+    "endDateTime": "2026-12-24T00:00:00",
+    "registrationDeadline": "2026-12-21T01:59:00",
+    "about": "Enjoy festive activities, workshops, and a movie night.",
+    "tickets": [
+      {
+        "id": 1,
+        "name": "General Admission",
+        "price": 150.00,
+        "capacity": 160,
+        "seatsLeft": 159
+      },
+      {
+        "id": 2,
+        "name": "VIP",
+        "price": 300.00,
+        "capacity": 40,
+        "seatsLeft": 39
+      }
+    ],
+    "venue": {
+      "name": "University Campus",
+      "location": "Main campus courtyard",
+      "imagePath": null
+    },
+    "facilities": [
+      "Food stalls",
+      "Parking"
+    ],
+    "capacity": 200,
+    "seatsLeft": 198,
+    "approvalMode": "MANUAL",
+    "status": "PUBLISHED",
+    "adminFeedback": "",
+    "submittedAt": "2026-10-01T12:00:00",
+    "publishedAt": "2026-10-02T14:00:00",
+    "registrationOpen": true
+  },
+  {
+    "id": 4,
+    "organizerId": 2,
+    "name": "AI Hackathon",
+    "categoryId": 4,
+    "categoryName": "Technology",
+    "imagePath": "/images/workshop.jpg",
+    "startDateTime": "2027-01-15T11:00:00",
+    "endDateTime": "2027-01-16T20:00:00",
+    "registrationDeadline": "2027-01-11T01:59:00",
+    "about": "A 2-day hackathon to build AI projects in teams.",
+    "tickets": [
+      {
+        "id": 7,
+        "name": "Team Member",
+        "price": 0.00,
+        "capacity": 120,
+        "seatsLeft": 120
+      }
+    ],
+    "venue": {
+      "name": "Innovation Hub",
+      "location": "Building C, ground floor",
+      "imagePath": null
+    },
+    "facilities": [
+      "Snacks",
+      "Wi-Fi"
+    ],
+    "capacity": 120,
+    "seatsLeft": 120,
+    "approvalMode": "MANUAL",
+    "status": "PUBLISHED",
+    "adminFeedback": "Looks good.",
+    "submittedAt": "2026-11-04T17:00:00",
+    "publishedAt": "2026-11-17T18:41:41",
+    "registrationOpen": true
+  }
+]

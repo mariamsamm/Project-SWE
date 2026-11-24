@@ -1,0 +1,10 @@
+[
+  {
+    "id": 4,
+    "eventId": 6,
+    "adminId": 1,
+    "decision": "REJECTED",
+    "feedback": "The venue is booked on that date. Please choose another day.",
+    "reviewedAt": "2026-10-21T17:00:00"
+  }
+]

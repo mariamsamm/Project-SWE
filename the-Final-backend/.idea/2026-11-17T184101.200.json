@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "eventId": 1,
+    "eventName": "Christmas Celebration",
+    "userId": 3,
+    "participantName": "Mariam Mohamed",
+    "participantEmail": "mariam@eventhub.demo",
+    "status": "CONFIRMED",
+    "ticketCode": "EH-3F2A-91C0",
+    "totalAmount": 450.00,
+    "items": [
+      {
+        "ticketCategoryId": 1,
+        "ticketName": "General Admission",
+        "quantity": 1,
+        "unitPrice": 150.00
+      },
+      {
+        "ticketCategoryId": 2,
+        "ticketName": "VIP",
+        "quantity": 1,
+        "unitPrice": 300.00
+      }
+    ],
+    "decidedAt": "2026-11-01T12:00:00",
+    "checkedInAt": null,
+    "createdAt": "2026-11-17T20:29:54"
+  },
+  {
+    "id": 2,
+    "eventId": 1,
+    "eventName": "Christmas Celebration",
+    "userId": 4,
+    "participantName": "Ahmed Khaled",
+    "participantEmail": "khaled@eventhub.demo",
+    "status": "REJECTED",
+    "ticketCode": "EH-7B10-44DE",
+    "totalAmount": 150.00,
+    "items": [
+      {
+        "ticketCategoryId": 1,
+        "ticketName": "General Admission",
+        "quantity": 1,
+        "unitPrice": 150.00
+      }
+    ],
+    "decidedAt": "2026-11-17T18:40:47",
+    "checkedInAt": null,
+    "createdAt": "2026-11-17T20:29:54"
+  },
+  {
+    "id": 3,
+    "eventId": 1,
+    "eventName": "Christmas Celebration",
+    "userId": 5,
+    "participantName": "Abdelrahman",
+    "participantEmail": "abdelrahman@eventhub.demo",
+    "status": "REJECTED",
+    "ticketCode": "EH-C0FF-EE01",
+    "totalAmount": 300.00,
+    "items": [
+      {
+        "ticketCategoryId": 2,
+        "ticketName": "VIP",
+        "quantity": 1,
+        "unitPrice": 300.00
+      }
+    ],
+    "decidedAt": "2026-11-02T11:30:00",
+    "checkedInAt": null,
+    "createdAt": "2026-11-17T20:29:54"
+  }
+]

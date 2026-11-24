@@ -1,0 +1,22 @@
+{
+  "id": 7,
+  "eventId": 2,
+  "eventName": "Web Development Workshop",
+  "userId": 5,
+  "participantName": "Abdelrahman",
+  "participantEmail": "abdelrahman@eventhub.demo",
+  "status": "CONFIRMED",
+  "ticketCode": "EH-28AA-0C4A",
+  "totalAmount": 75.00,
+  "items": [
+    {
+      "ticketCategoryId": 3,
+      "ticketName": "Student Admission",
+      "quantity": 1,
+      "unitPrice": 75.00
+    }
+  ],
+  "decidedAt": "2026-11-17T18:41:23.2567636",
+  "checkedInAt": null,
+  "createdAt": "2026-11-17T18:41:23.2577669"
+}

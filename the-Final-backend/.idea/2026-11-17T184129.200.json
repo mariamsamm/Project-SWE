@@ -1,0 +1,24 @@
+[
+  {
+    "userId": 2,
+    "fullName": "Mariam Samir",
+    "email": "samir@eventhub.demo",
+    "active": true,
+    "organizationName": "Student Union",
+    "department": "Student Activities",
+    "bio": "Runs campus celebrations, workshops and tournaments.",
+    "approvedBy": 1,
+    "approvedAt": "2026-09-01T13:00:00"
+  },
+  {
+    "userId": 6,
+    "fullName": "Sara Ahmed",
+    "email": "sara@example.com",
+    "active": true,
+    "organizationName": "Cinema Club",
+    "department": "Student Activities",
+    "bio": "Runs movie nights.",
+    "approvedBy": 1,
+    "approvedAt": "2026-11-17T18:41:28"
+  }
+]

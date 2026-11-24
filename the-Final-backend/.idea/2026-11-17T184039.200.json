@@ -1,0 +1,14 @@
+[
+  {
+    "id": 2,
+    "message": "Your event \"Spring Music Night\" was REJECTED. Reason: The venue is booked on that date.",
+    "createdAt": "2026-11-17T20:29:55",
+    "read": true
+  },
+  {
+    "id": 1,
+    "message": "Your event \"Christmas Celebration\" was APPROVED and is now published.",
+    "createdAt": "2026-11-17T20:29:55",
+    "read": true
+  }
+]

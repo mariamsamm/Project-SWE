@@ -1,0 +1,10 @@
+{
+  "id": 4,
+  "fullName": "Ahmed Khaled",
+  "email": "khaled@eventhub.demo",
+  "role": "PARTICIPANT",
+  "phone": null,
+  "dateOfBirth": "2001-11-02",
+  "active": false,
+  "organizationName": null
+}

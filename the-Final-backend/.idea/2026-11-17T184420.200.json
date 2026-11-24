@@ -1,0 +1,10 @@
+{
+  "id": 3,
+  "fullName": "Mariam Mohamed",
+  "email": "mariam@eventhub.demo",
+  "role": "PARTICIPANT",
+  "phone": "01000000003",
+  "dateOfBirth": "2000-05-14",
+  "active": true,
+  "organizationName": null
+}

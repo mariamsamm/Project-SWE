@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "fullName": "Layla Shaheen",
+    "email": "layla@eventhub.demo",
+    "role": "ADMIN",
+    "phone": "01000000001",
+    "dateOfBirth": "1990-03-10",
+    "active": true,
+    "organizationName": null
+  },
+  {
+    "id": 2,
+    "fullName": "Mariam Samir",
+    "email": "samir@eventhub.demo",
+    "role": "ORGANIZER",
+    "phone": "01000000002",
+    "dateOfBirth": "1995-07-21",
+    "active": true,
+    "organizationName": null
+  },
+  {
+    "id": 3,
+    "fullName": "Mariam Mohamed",
+    "email": "mariam@eventhub.demo",
+    "role": "PARTICIPANT",
+    "phone": "01000000003",
+    "dateOfBirth": "2000-05-14",
+    "active": true,
+    "organizationName": null
+  },
+  {
+    "id": 4,
+    "fullName": "Ahmed Khaled",
+    "email": "khaled@eventhub.demo",
+    "role": "PARTICIPANT",
+    "phone": null,
+    "dateOfBirth": "2001-11-02",
+    "active": false,
+    "organizationName": null
+  },
+  {
+    "id": 5,
+    "fullName": "Abdelrahman",
+    "email": "abdelrahman@eventhub.demo",
+    "role": "PARTICIPANT",
+    "phone": null,
+    "dateOfBirth": "2002-01-28",
+    "active": true,
+    "organizationName": null
+  },
+  {
+    "id": 6,
+    "fullName": "Sara Ahmed",
+    "email": "sara@example.com",
+    "role": "ORGANIZER",
+    "phone": "01012345678",
+    "dateOfBirth": "2001-03-15",
+    "active": true,
+    "organizationName": null
+  }
+]

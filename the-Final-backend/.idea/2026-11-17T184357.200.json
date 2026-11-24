@@ -1,0 +1,290 @@
+[
+  {
+    "id": 2,
+    "organizerId": 2,
+    "name": "Web Development Workshop",
+    "categoryId": 2,
+    "categoryName": "Education",
+    "imagePath": "/images/workshop.jpg",
+    "startDateTime": "2026-12-05T12:00:00",
+    "endDateTime": "2026-12-05T16:00:00",
+    "registrationDeadline": "2026-12-04T01:59:00",
+    "about": "Learn the basics of building websites with React.",
+    "tickets": [
+      {
+        "id": 3,
+        "name": "Student Admission",
+        "price": 75.00,
+        "capacity": 20,
+        "seatsLeft": 18
+      },
+      {
+        "id": 4,
+        "name": "Standard Admission",
+        "price": 120.00,
+        "capacity": 10,
+        "seatsLeft": 8
+      }
+    ],
+    "venue": {
+      "name": "Computer Lab",
+      "location": "Building B, floor 2",
+      "imagePath": null
+    },
+    "facilities": [
+      "Laptops provided",
+      "Wi-Fi"
+    ],
+    "capacity": 30,
+    "seatsLeft": 26,
+    "approvalMode": "AUTOMATIC",
+    "status": "PUBLISHED",
+    "adminFeedback": "",
+    "submittedAt": "2026-10-05T12:00:00",
+    "publishedAt": "2026-10-06T15:00:00",
+    "registrationOpen": true
+  },
+  {
+    "id": 3,
+    "organizerId": 2,
+    "name": "Sports Tournament",
+    "categoryId": 3,
+    "categoryName": "Sports",
+    "imagePath": "/images/sports1.jpg",
+    "startDateTime": "2026-12-10T11:00:00",
+    "endDateTime": "2026-12-11T19:00:00",
+    "registrationDeadline": "2026-12-08T01:59:00",
+    "about": "Join a day of team competitions and sporting activities.",
+    "tickets": [
+      {
+        "id": 5,
+        "name": "General Admission",
+        "price": 80.00,
+        "capacity": 80,
+        "seatsLeft": 78
+      },
+      {
+        "id": 6,
+        "name": "Premium Seating",
+        "price": 160.00,
+        "capacity": 20,
+        "seatsLeft": 20
+      }
+    ],
+    "venue": {
+      "name": "University Sports Courts",
+      "location": "Sports complex",
+      "imagePath": null
+    },
+    "facilities": [
+      "Changing rooms",
+      "First aid"
+    ],
+    "capacity": 100,
+    "seatsLeft": 98,
+    "approvalMode": "AUTOMATIC",
+    "status": "DRAFT",
+    "adminFeedback": "Reported by a user.",
+    "submittedAt": "2026-10-10T12:00:00",
+    "publishedAt": null,
+    "registrationOpen": false
+  },
+  {
+    "id": 1,
+    "organizerId": 2,
+    "name": "Christmas Celebration",
+    "categoryId": 1,
+    "categoryName": "Entertainment",
+    "imagePath": "/images/christmas.jpg",
+    "startDateTime": "2026-12-23T14:00:00",
+    "endDateTime": "2026-12-24T00:00:00",
+    "registrationDeadline": "2026-12-21T01:59:00",
+    "about": "Enjoy festive activities, workshops, and a movie night.",
+    "tickets": [
+      {
+        "id": 1,
+        "name": "General Admission",
+        "price": 150.00,
+        "capacity": 160,
+        "seatsLeft": 159
+      },
+      {
+        "id": 2,
+        "name": "VIP",
+        "price": 300.00,
+        "capacity": 40,
+        "seatsLeft": 39
+      }
+    ],
+    "venue": {
+      "name": "University Campus",
+      "location": "Main campus courtyard",
+      "imagePath": null
+    },
+    "facilities": [
+      "Food stalls",
+      "Parking"
+    ],
+    "capacity": 200,
+    "seatsLeft": 198,
+    "approvalMode": "MANUAL",
+    "status": "PUBLISHED",
+    "adminFeedback": "",
+    "submittedAt": "2026-10-01T12:00:00",
+    "publishedAt": "2026-10-02T14:00:00",
+    "registrationOpen": true
+  },
+  {
+    "id": 4,
+    "organizerId": 2,
+    "name": "AI Hackathon",
+    "categoryId": 4,
+    "categoryName": "Technology",
+    "imagePath": "/images/workshop.jpg",
+    "startDateTime": "2027-01-15T11:00:00",
+    "endDateTime": "2027-01-16T20:00:00",
+    "registrationDeadline": "2027-01-11T01:59:00",
+    "about": "A 2-day hackathon to build AI projects in teams.",
+    "tickets": [
+      {
+        "id": 7,
+        "name": "Team Member",
+        "price": 0.00,
+        "capacity": 120,
+        "seatsLeft": 120
+      }
+    ],
+    "venue": {
+      "name": "Innovation Hub",
+      "location": "Building C, ground floor",
+      "imagePath": null
+    },
+    "facilities": [
+      "Snacks",
+      "Wi-Fi"
+    ],
+    "capacity": 120,
+    "seatsLeft": 120,
+    "approvalMode": "MANUAL",
+    "status": "PUBLISHED",
+    "adminFeedback": "Looks good.",
+    "submittedAt": "2026-11-04T17:00:00",
+    "publishedAt": "2026-11-17T18:41:41",
+    "registrationOpen": true
+  },
+  {
+    "id": 5,
+    "organizerId": 2,
+    "name": "Career Fair",
+    "categoryId": 5,
+    "categoryName": "Career",
+    "imagePath": null,
+    "startDateTime": "2027-02-03T12:00:00",
+    "endDateTime": "2027-02-03T18:00:00",
+    "registrationDeadline": "2027-02-02T01:59:00",
+    "about": "Meet companies hiring interns and fresh graduates.",
+    "tickets": [
+      {
+        "id": 8,
+        "name": "Visitor",
+        "price": 0.00,
+        "capacity": 300,
+        "seatsLeft": 300
+      }
+    ],
+    "venue": {
+      "name": "Main Hall",
+      "location": "Administration building",
+      "imagePath": null
+    },
+    "facilities": [],
+    "capacity": 300,
+    "seatsLeft": 300,
+    "approvalMode": "AUTOMATIC",
+    "status": "PENDING_REVIEW",
+    "adminFeedback": "",
+    "submittedAt": "2026-11-17T18:41:48",
+    "publishedAt": null,
+    "registrationOpen": false
+  },
+  {
+    "id": 7,
+    "organizerId": 2,
+    "name": "Photography Workshop",
+    "categoryId": 2,
+    "categoryName": "Education",
+    "imagePath": null,
+    "startDateTime": "2027-03-10T18:00:00",
+    "endDateTime": "2027-03-10T21:00:00",
+    "registrationDeadline": "2027-03-08T23:59:00",
+    "about": "Learn the basics of photography.",
+    "tickets": [
+      {
+        "id": 10,
+        "name": "Student",
+        "price": 50.00,
+        "capacity": 40,
+        "seatsLeft": 40
+      },
+      {
+        "id": 11,
+        "name": "Standard",
+        "price": 100.00,
+        "capacity": 20,
+        "seatsLeft": 20
+      }
+    ],
+    "venue": {
+      "name": "Media Lab",
+      "location": "Building D, floor 1",
+      "imagePath": null
+    },
+    "facilities": [
+      "Projector",
+      "Wi-Fi"
+    ],
+    "capacity": 60,
+    "seatsLeft": 60,
+    "approvalMode": "MANUAL",
+    "status": "DRAFT",
+    "adminFeedback": "",
+    "submittedAt": null,
+    "publishedAt": null,
+    "registrationOpen": false
+  },
+  {
+    "id": 6,
+    "organizerId": 2,
+    "name": "Spring Music Night",
+    "categoryId": 6,
+    "categoryName": "Music",
+    "imagePath": "/images/christmas.jpg",
+    "startDateTime": "2027-03-20T21:00:00",
+    "endDateTime": "2027-03-21T01:00:00",
+    "registrationDeadline": "2027-03-16T01:59:00",
+    "about": "Live performances by student bands.",
+    "tickets": [
+      {
+        "id": 9,
+        "name": "General Admission",
+        "price": 100.00,
+        "capacity": 250,
+        "seatsLeft": 250
+      }
+    ],
+    "venue": {
+      "name": "Open-air Theatre",
+      "location": "Behind the library",
+      "imagePath": null
+    },
+    "facilities": [],
+    "capacity": 250,
+    "seatsLeft": 250,
+    "approvalMode": "AUTOMATIC",
+    "status": "REJECTED",
+    "adminFeedback": "The venue is booked on that date. Please choose another day.",
+    "submittedAt": "2026-10-20T12:00:00",
+    "publishedAt": null,
+    "registrationOpen": false
+  }
+]

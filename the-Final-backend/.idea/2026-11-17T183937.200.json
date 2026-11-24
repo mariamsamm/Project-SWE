@@ -1,0 +1,137 @@
+[
+  {
+    "id": 2,
+    "organizerId": 2,
+    "name": "Web Development Workshop",
+    "categoryId": 2,
+    "categoryName": "Education",
+    "imagePath": "/images/workshop.jpg",
+    "startDateTime": "2026-12-05T12:00:00",
+    "endDateTime": "2026-12-05T16:00:00",
+    "registrationDeadline": "2026-12-04T01:59:00",
+    "about": "Learn the basics of building websites with React.",
+    "tickets": [
+      {
+        "id": 3,
+        "name": "Student Admission",
+        "price": 75.00,
+        "capacity": 20,
+        "seatsLeft": 19
+      },
+      {
+        "id": 4,
+        "name": "Standard Admission",
+        "price": 120.00,
+        "capacity": 10,
+        "seatsLeft": 8
+      }
+    ],
+    "venue": {
+      "name": "Computer Lab",
+      "location": "Building B, floor 2",
+      "imagePath": null
+    },
+    "facilities": [
+      "Laptops provided",
+      "Wi-Fi"
+    ],
+    "capacity": 30,
+    "seatsLeft": 27,
+    "approvalMode": "AUTOMATIC",
+    "status": "PUBLISHED",
+    "adminFeedback": "",
+    "submittedAt": "2026-10-05T12:00:00",
+    "publishedAt": "2026-10-06T15:00:00",
+    "registrationOpen": true
+  },
+  {
+    "id": 3,
+    "organizerId": 2,
+    "name": "Sports Tournament",
+    "categoryId": 3,
+    "categoryName": "Sports",
+    "imagePath": "/images/sports1.jpg",
+    "startDateTime": "2026-12-10T11:00:00",
+    "endDateTime": "2026-12-11T19:00:00",
+    "registrationDeadline": "2026-12-08T01:59:00",
+    "about": "Join a day of team competitions and sporting activities.",
+    "tickets": [
+      {
+        "id": 5,
+        "name": "General Admission",
+        "price": 80.00,
+        "capacity": 80,
+        "seatsLeft": 78
+      },
+      {
+        "id": 6,
+        "name": "Premium Seating",
+        "price": 160.00,
+        "capacity": 20,
+        "seatsLeft": 20
+      }
+    ],
+    "venue": {
+      "name": "University Sports Courts",
+      "location": "Sports complex",
+      "imagePath": null
+    },
+    "facilities": [
+      "Changing rooms",
+      "First aid"
+    ],
+    "capacity": 100,
+    "seatsLeft": 98,
+    "approvalMode": "AUTOMATIC",
+    "status": "PUBLISHED",
+    "adminFeedback": "",
+    "submittedAt": "2026-10-10T12:00:00",
+    "publishedAt": "2026-10-11T13:00:00",
+    "registrationOpen": true
+  },
+  {
+    "id": 1,
+    "organizerId": 2,
+    "name": "Christmas Celebration",
+    "categoryId": 1,
+    "categoryName": "Entertainment",
+    "imagePath": "/images/christmas.jpg",
+    "startDateTime": "2026-12-23T14:00:00",
+    "endDateTime": "2026-12-24T00:00:00",
+    "registrationDeadline": "2026-12-21T01:59:00",
+    "about": "Enjoy festive activities, workshops, and a movie night.",
+    "tickets": [
+      {
+        "id": 1,
+        "name": "General Admission",
+        "price": 150.00,
+        "capacity": 160,
+        "seatsLeft": 158
+      },
+      {
+        "id": 2,
+        "name": "VIP",
+        "price": 300.00,
+        "capacity": 40,
+        "seatsLeft": 39
+      }
+    ],
+    "venue": {
+      "name": "University Campus",
+      "location": "Main campus courtyard",
+      "imagePath": null
+    },
+    "facilities": [
+      "Food stalls",
+      "Parking"
+    ],
+    "capacity": 200,
+    "seatsLeft": 197,
+    "approvalMode": "MANUAL",
+    "status": "PUBLISHED",
+    "adminFeedback": "",
+    "submittedAt": "2026-10-01T12:00:00",
+    "publishedAt": "2026-10-02T14:00:00",
+    "registrationOpen": true
+  }
+]

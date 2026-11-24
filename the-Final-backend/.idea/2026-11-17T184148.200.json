@@ -1,0 +1,35 @@
+{
+  "id": 5,
+  "organizerId": 2,
+  "name": "Career Fair",
+  "categoryId": 5,
+  "categoryName": "Career",
+  "imagePath": null,
+  "startDateTime": "2027-02-03T12:00:00",
+  "endDateTime": "2027-02-03T18:00:00",
+  "registrationDeadline": "2027-02-02T01:59:00",
+  "about": "Meet companies hiring interns and fresh graduates.",
+  "tickets": [
+    {
+      "id": 8,
+      "name": "Visitor",
+      "price": 0.00,
+      "capacity": 300,
+      "seatsLeft": 300
+    }
+  ],
+  "venue": {
+    "name": "Main Hall",
+    "location": "Administration building",
+    "imagePath": null
+  },
+  "facilities": [],
+  "capacity": 300,
+  "seatsLeft": 300,
+  "approvalMode": "AUTOMATIC",
+  "status": "PENDING_REVIEW",
+  "adminFeedback": "",
+  "submittedAt": "2026-11-17T18:41:48.3472145",
+  "publishedAt": null,
+  "registrationOpen": false
+}
