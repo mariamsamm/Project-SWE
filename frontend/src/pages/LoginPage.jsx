@@ -13,10 +13,12 @@ function LoginPage() {
 
       <LoginForm
         onSuccess={(session) => {
-          // Organizers and admins with nowhere special to go land on their dashboard;
-          // everyone else goes back to where they were (for example the Create event page).
-          const home = { ORGANIZER: pageUrl("organizer"), ADMIN: pageUrl("admin") }[session.role]
-          goTo(home && next === "/" ? home : next)
+          // Admins always open the admin dashboard straight away (unless they were
+          // heading to another admin page). Organizers with nowhere special to go land
+          // on their dashboard; everyone else goes back to where they were.
+          const adminPage = /[?&]page=(admin|review-event)/.test(next)
+          if (session.role === "ADMIN") return goTo(adminPage ? next : pageUrl("admin"))
+          goTo(session.role === "ORGANIZER" && next === "/" ? pageUrl("organizer") : next)
         }}
       />
 
