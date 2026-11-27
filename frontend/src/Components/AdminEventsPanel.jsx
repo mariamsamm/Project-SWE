@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react"
-import { canCancelEvent } from "../services/organizerService"
 import { formatShortDate, STATUS_LABELS } from "../utils/format"
 import { pageUrl } from "../utils/navigation"
 import StatusBadge from "./StatusBadge"
@@ -17,9 +16,10 @@ const SORTS = {
 /**
  * Searchable, filterable table of every event (Admin.viewAllEvents).
  * `overview` is the short version on the dashboard: 4 filters, 5 rows and a "View all events" link.
- * The full version adds sorting, registrations and a Cancel button (`onCancel`).
+ * The full version adds sorting and registrations.
+ * It is for watching events only: reviewing and cancelling happen on the Event review page.
  */
-function AdminEventsPanel({ events, overview = false, initialFilter = "ALL", initialSort = "soonest", onCancel }) {
+function AdminEventsPanel({ events, overview = false, initialFilter = "ALL", initialSort = "soonest" }) {
   const [filter, setFilter] = useState(initialFilter)
   const [query, setQuery] = useState("")
   const [sort, setSort] = useState(SORTS[initialSort] ? initialSort : "soonest")
@@ -118,7 +118,6 @@ function AdminEventsPanel({ events, overview = false, initialFilter = "ALL", ini
                 <th scope="col">Date</th>
                 <th scope="col">Status</th>
                 {!overview && <th scope="col">Registrations</th>}
-                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -140,21 +139,6 @@ function AdminEventsPanel({ events, overview = false, initialFilter = "ALL", ini
                       {event.registrations} / {event.capacity}
                     </td>
                   )}
-                  <td>
-                    <div className="organizer-event__actions">
-                      <a
-                        className={`organizer-btn${event.status === "PENDING_REVIEW" ? " organizer-btn--primary" : ""}`}
-                        href={pageUrl("review-event", { id: event.id })}
-                      >
-                        {event.status === "PENDING_REVIEW" ? "Review" : "View details"}
-                      </a>
-                      {onCancel && canCancelEvent(event) && event.status === "PUBLISHED" && (
-                        <button type="button" className="organizer-btn staff-btn--danger-outline" onClick={() => onCancel(event)}>
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>

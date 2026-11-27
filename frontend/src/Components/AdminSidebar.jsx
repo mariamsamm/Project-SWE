@@ -3,7 +3,7 @@ import { pageUrl } from "../utils/navigation"
 
 const ICONS = {
   dashboard: "M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z",
-  pending: "M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
+  pending: "M9 11l2 2 4-4M5 4h14v16H5z",
   events: "M5 6h14v14H5zM5 10h14M9 3v4M15 3v4",
   users: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.5a6 6 0 0 1 3.5 5.5",
   logout: "M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10",
@@ -19,7 +19,7 @@ function Icon({ name }) {
 
 const LINKS = [
   { id: "dashboard", label: "Dashboard", href: pageUrl("admin") },
-  { id: "pending", label: "Pending reviews", href: pageUrl("admin-reviews") },
+  { id: "pending", label: "Event review", href: pageUrl("admin-reviews") },
   { id: "events", label: "All events", href: pageUrl("admin-events") },
   { id: "users", label: "Users", href: pageUrl("admin-users") },
 ]

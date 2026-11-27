@@ -11,6 +11,7 @@ import { useToast } from "../hooks/useToast"
 import { getEvents } from "../services/eventService"
 import {
   approveRegistrations,
+  canCheckIn,
   getFormFields,
   listRegistrations,
   registrationsToCsv,
@@ -168,6 +169,11 @@ function EventOverview({ event, status, publicUrl, onSubmit, onCancel, onCopy })
             <button type="button" className="organizer-btn organizer-btn--outline" onClick={onSubmit}>
               Submit for review
             </button>
+          )}
+          {canCheckIn(event) && (
+            <a className="organizer-btn organizer-btn--primary" href={pageUrl("check-in", { id: event.id })}>
+              Open check-in
+            </a>
           )}
           {publicUrl && (
             <>
@@ -786,7 +792,7 @@ function FormTab({ event, locked, onSaved }) {
 
 /* ---------- Attendance ---------- */
 
-function AttendanceTab({ registrations, totals }) {
+function AttendanceTab({ event, registrations, totals }) {
   const arrived = registrations
     .filter((row) => row.status === "APPROVED" && row.checkedInAt)
     .sort((a, b) => b.checkedInAt.localeCompare(a.checkedInAt))
@@ -805,7 +811,13 @@ function AttendanceTab({ registrations, totals }) {
           {totals.approved - totals.checkedIn} still to arrive.
           {totals.pending > 0 && ` ${totals.pending} seats are waiting for your approval and can't check in yet.`}
         </p>
-        <p className="organizer-muted">People are marked as arrived from the check-in page.</p>
+        {canCheckIn(event) ? (
+          <a className="organizer-btn organizer-btn--primary" href={pageUrl("check-in", { id: event.id })}>
+            Open check-in
+          </a>
+        ) : (
+          <p className="organizer-muted">Check-in opens once the event is published.</p>
+        )}
       </div>
 
       <div>
@@ -1122,7 +1134,7 @@ function ManageEvent({ eventId }) {
               onSaved={(message) => run(async () => message)}
             />
           )}
-          {tab === "attendance" && <AttendanceTab registrations={registrations} totals={totals} />}
+          {tab === "attendance" && <AttendanceTab event={event} registrations={registrations} totals={totals} />}
           {tab === "messages" && (
             <MessagesTab
               event={event}
