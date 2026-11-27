@@ -1,9 +1,17 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import StaffLayout, { StaffHeader } from "../Components/StaffLayout"
 import StatusBadge from "../Components/StatusBadge"
-import { canCheckIn, listCheckInEvents } from "../services/manageEventService"
+import Toast from "../Components/Toast"
+import { useToast } from "../hooks/useToast"
+import {
+  canCheckIn,
+  checkInByCode,
+  listCheckInEvents,
+  listRegistrations,
+  normalizeCode,
+} from "../services/manageEventService"
 import { effectiveStatus, getOrganizerEvent } from "../services/organizerService"
-import { formatEventDate } from "../utils/format"
+import { formatEventDate, STATUS_LABELS } from "../utils/format"
 import { pageUrl } from "../utils/navigation"
 import "./OrganizerPages.css"
 import "./StaffPages.css"
@@ -15,6 +23,60 @@ import "./StaffPages.css"
  * (Ticket.validate). A valid ticket is recorded with the arrival time (CheckIn.recordEntry)
  * and stops working, so it can't be used twice (Ticket.invalidate).
  */
+
+function timeOf(iso) {
+  return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Cairo" })
+}
+
+/** Adds the time of the scan, so every scan counts as a new result and the box animates again. */
+function stamped(answer) {
+  return { ...answer, at: Date.now() }
+}
+
+/** What to show for each answer from checkInByCode(). */
+function describe(outcome) {
+  const person = outcome.registration
+  const seats = person ? `${person.quantity} × ${person.ticketName}` : ""
+
+  switch (outcome.result) {
+    case "OK":
+      return {
+        tone: "ok",
+        icon: "✓",
+        title: `Welcome, ${person.name}`,
+        text: `Checked in. Admits ${person.quantity}: ${seats}.`,
+      }
+    case "ALREADY":
+      return {
+        tone: "warn",
+        icon: "!",
+        title: "Already checked in",
+        text: `${person.name} used this ticket at ${timeOf(person.checkedInAt)}. Don't let it in twice.`,
+      }
+    case "NOT_APPROVED":
+      return {
+        tone: "warn",
+        icon: "!",
+        title: "Ticket not valid",
+        text: `${person.name}'s registration is "${STATUS_LABELS[person.status] ?? person.status}", so it can't be used.`,
+      }
+    case "WRONG_EVENT":
+      return {
+        tone: "bad",
+        icon: "×",
+        title: "Ticket is for another event",
+        text: `This ticket belongs to ${person.name} for "${outcome.otherEvent.title}".`,
+      }
+    default:
+      return {
+        tone: "bad",
+        icon: "×",
+        title: "Invalid ticket",
+        text: outcome.code ? `No ticket has the code ${outcome.code}.` : "Enter a ticket code first.",
+      }
+  }
+}
+
 
 /* ---------- Choose an event (when the page opens without one) ---------- */
 
@@ -62,6 +124,17 @@ function CheckIn({ eventId }) {
   const [event, setEvent] = useState(null)
   const [status, setStatus] = useState("loading")
   const [openedAt] = useState(() => Date.now())
+  const inputRef = useRef(null)
+  const [registrations, setRegistrations] = useState([])
+  const [otherCode, setOtherCode] = useState("")
+  const [code, setCode] = useState("")
+  const [outcome, setOutcome] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [toast, setToast] = useToast()
+
+  const refresh = useCallback(async () => {
+    setRegistrations(await listRegistrations(eventId))
+  }, [eventId])
 
   useEffect(() => {
     let active = true
@@ -73,6 +146,17 @@ function CheckIn({ eventId }) {
         if (!found) return setStatus("missing")
         setEvent(found)
         if (!canCheckIn(found)) return setStatus("closed")
+        await refresh()
+
+        // A ticket from a different event, so the "wrong event" answer can be tried.
+        const others = (await listCheckInEvents()).filter((item) => String(item.id) !== String(eventId))
+        for (const other of others) {
+          const ticket = (await listRegistrations(other.id)).find((row) => row.status === "APPROVED" && row.ticketCode)
+          if (ticket && active) {
+            setOtherCode(ticket.ticketCode)
+            break
+          }
+        }
         if (active) setStatus("ready")
       } catch {
         if (active) setStatus("error")
@@ -83,8 +167,27 @@ function CheckIn({ eventId }) {
     return () => {
       active = false
     }
-  }, [eventId])
+  }, [eventId, refresh])
 
+  const verify = useCallback(
+    async (value) => {
+      setBusy(true)
+      try {
+        const answer = await checkInByCode(eventId, value)
+        setOutcome(stamped(answer))
+        await refresh()
+        setCode("")
+      } catch (caught) {
+        setToast(caught.message)
+      } finally {
+        setBusy(false)
+        inputRef.current?.focus()
+      }
+    },
+    [eventId, refresh, setToast]
+  )
+
+  const approved = useMemo(() => registrations.filter((row) => row.status === "APPROVED"), [registrations])
 
 
 
@@ -108,6 +211,9 @@ function CheckIn({ eventId }) {
   }
 
   const notStarted = new Date(event.startDate).getTime() > openedAt
+  const shown = outcome ? describe(outcome) : null
+  const waitingTicket = approved.find((row) => !row.checkedInAt)
+  const usedTicket = approved.find((row) => row.checkedInAt)
 
 
 
@@ -129,9 +235,85 @@ function CheckIn({ eventId }) {
       </StaffHeader>
 
 
+      <div className="staff-checkin">
+        <section className="organizer-panel" aria-labelledby="scan-title">
+          <div className="organizer-panel__header">
+            <h2 id="scan-title">Scan or enter a ticket</h2>
+          </div>
 
 
+          <form
+            className="staff-code-form"
+            onSubmit={(e) => {
+              e.preventDefault()
+              verify(code)
+            }}
+          >
+            <label className="visually-hidden" htmlFor="ticket-code">
+              Ticket code
+            </label>
+            <input
+              id="ticket-code"
+              ref={inputRef}
+              type="text"
+              value={code}
+              placeholder="EH-0000-0000"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={14}
+              autoFocus
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onBlur={() => code && setCode(normalizeCode(code))}
+            />
+            <button type="submit" className="organizer-btn organizer-btn--primary" disabled={busy || !code.trim()}>
+              {busy ? "Checking…" : "Verify"}
+            </button>
+          </form>
 
+
+          <div aria-live="assertive">
+            {shown && (
+              <div key={outcome.at} className={`staff-result staff-result--${shown.tone}`}>
+                <span className="staff-result__icon" aria-hidden="true">
+                  {shown.icon}
+                </span>
+                <div>
+                  <h3>{shown.title}</h3>
+                  <p>{shown.text}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <details className="staff-demo">
+            <summary>Need a code to test with?</summary>
+            <div className="staff-chips">
+              {waitingTicket && (
+                <button type="button" onClick={() => setCode(waitingTicket.ticketCode)}>
+                  {waitingTicket.ticketCode} (valid)
+                </button>
+              )}
+              {usedTicket && (
+                <button type="button" onClick={() => setCode(usedTicket.ticketCode)}>
+                  {usedTicket.ticketCode} (already used)
+                </button>
+              )}
+              {otherCode && (
+                <button type="button" onClick={() => setCode(otherCode)}>
+                  {otherCode} (other event)
+                </button>
+              )}
+              <button type="button" onClick={() => setCode("EH-0000-0000")}>
+                EH-0000-0000 (invalid)
+              </button>
+            </div>
+          </details>
+        </section>
+
+      </div>
+
+      <Toast message={toast} onDismiss={() => setToast("")} />
     </>
   )
 }
