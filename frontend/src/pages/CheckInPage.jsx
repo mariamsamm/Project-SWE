@@ -78,6 +78,90 @@ function describe(outcome) {
 }
 
 
+/* ---------- Camera QR scanner ---------- */
+
+function CameraScanner({ onCode, onError }) {
+  const videoRef = useRef(null)
+  const handlers = useRef({ onCode, onError })
+
+  useEffect(() => {
+    handlers.current = { onCode, onError }
+  }, [onCode, onError])
+
+  useEffect(() => {
+    const video = videoRef.current
+    const canvas = document.createElement("canvas")
+    const context = canvas.getContext("2d", { willReadFrequently: true })
+    let stream = null
+    let frame = 0
+    let stopped = false
+    let lastScan = 0
+    let last = { code: "", at: 0 }
+
+    function scan(now) {
+      if (stopped) return
+      frame = requestAnimationFrame(scan)
+      // Look at about 5 frames per second: enough to feel instant, light on the battery.
+      if (now - lastScan < 200 || video.readyState < 2 || !video.videoWidth) return
+      lastScan = now
+
+      const scale = Math.min(1, 640 / video.videoWidth)
+      canvas.width = Math.round(video.videoWidth * scale)
+      canvas.height = Math.round(video.videoHeight * scale)
+      context.drawImage(video, 0, 0, canvas.width, canvas.height)
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height)
+      const found = jsQR(pixels.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" })
+
+      // A ticket held in front of the camera is read once. It is only read again
+      // after it has been out of view for 2 seconds.
+      if (found?.data) {
+        const isNew = found.data !== last.code || now - last.at > 2000
+        last = { code: found.data, at: now }
+        if (isNew) handlers.current.onCode(found.data)
+      }
+    }
+
+    let jsQR = null
+
+    async function start() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        return handlers.current.onError("This browser can't use the camera. Type the code instead.")
+      }
+      try {
+        // The QR reader is only downloaded when the camera is first used.
+        jsQR = (await import("jsqr")).default
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+        if (stopped) return stream.getTracks().forEach((track) => track.stop())
+        video.srcObject = stream
+        await video.play()
+        frame = requestAnimationFrame(scan)
+      } catch (caught) {
+        handlers.current.onError(
+          caught?.name === "NotAllowedError"
+            ? "Camera access was blocked. Allow the camera in your browser, or type the code instead."
+            : "We couldn't start the camera. Type the code instead."
+        )
+      }
+    }
+
+    start()
+
+    return () => {
+      stopped = true
+      cancelAnimationFrame(frame)
+      stream?.getTracks().forEach((track) => track.stop())
+      video.srcObject = null
+    }
+  }, [])
+
+  return (
+    <div className="staff-camera">
+      <video ref={videoRef} muted playsInline aria-label="Camera view. Hold the QR code inside the frame." />
+    </div>
+  )
+}
+
+
 /* ---------- Choose an event (when the page opens without one) ---------- */
 
 function EventPicker() {
@@ -131,6 +215,8 @@ function CheckIn({ eventId }) {
   const [outcome, setOutcome] = useState(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useToast()
+  const [camera, setCamera] = useState(false)
+  const [cameraError, setCameraError] = useState("")
 
   const refresh = useCallback(async () => {
     setRegistrations(await listRegistrations(eventId))
@@ -270,6 +356,36 @@ function CheckIn({ eventId }) {
               {busy ? "Checking…" : "Verify"}
             </button>
           </form>
+
+          <div className="staff-scan-row">
+            <button
+              type="button"
+              className="organizer-btn organizer-btn--outline"
+              aria-pressed={camera}
+              onClick={() => {
+                setCameraError("")
+                setCamera(!camera)
+              }}
+            >
+              {camera ? "Stop camera" : "Scan QR with camera"}
+            </button>
+            <span className="organizer-muted">{camera ? "Hold the QR code inside the frame." : "Or type the code under the QR."}</span>
+          </div>
+
+          {cameraError && (
+            <p className="staff-error staff-top-gap" role="alert">
+              {cameraError}
+            </p>
+          )}
+          {camera && (
+            <CameraScanner
+              onCode={verify}
+              onError={(message) => {
+                setCameraError(message)
+                setCamera(false)
+              }}
+            />
+          )}
 
 
           <div aria-live="assertive">
