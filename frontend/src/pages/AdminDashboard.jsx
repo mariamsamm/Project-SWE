@@ -98,7 +98,7 @@ function NotificationBell({ pendingEvents }) {
             </ul>
           )}
           <a className="staff-link staff-bell__all" href={pageUrl("admin-reviews")}>
-            See all reviews →
+            Open event review →
           </a>
         </div>
       )}
@@ -148,8 +148,8 @@ function QuickActions({ pendingEvents, userCount, eventCount }) {
   const next = pendingEvents[0]
   const actions = [
     {
-      title: "Review pending events",
-      text: next ? `${pendingEvents.length} waiting for your approval.` : "See every event and its review status.",
+      title: "Event review",
+      text: next ? `${pendingEvents.length} waiting for your review.` : "See every event and its review status.",
       href: pageUrl("admin-reviews"),
       icon: "M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
     },

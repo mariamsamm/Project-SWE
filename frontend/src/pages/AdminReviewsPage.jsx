@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import DashboardCard from "../Components/DashboardCard"
 import StaffLayout, { StaffHeader } from "../Components/StaffLayout"
 import StatusBadge from "../Components/StatusBadge"
-import { getAdminSummary } from "../services/adminService"
+import { DECISIONS, getAdminSummary } from "../services/adminService"
 import { formatShortDate } from "../utils/format"
 import { pageUrl } from "../utils/navigation"
 import "./OrganizerPages.css"
@@ -10,23 +11,25 @@ import "./StaffPages.css"
 const DAY = 24 * 60 * 60 * 1000
 
 /**
- * What each event status means for the admin:
- * only PENDING_REVIEW needs a decision, the rest are for information.
+ * Where each event is in the review process:
+ *  needs   = submitted, the admin must decide (EventReview.approve / reject / requestRevision)
+ *  waiting = with the organizer (not submitted yet, or changes requested)
+ *  done    = already reviewed, nothing to do
  */
 const REVIEW_STATE = {
-  PENDING_REVIEW: { tone: "needs", label: "Needs your approval" },
-  REVISION_REQUIRED: { tone: "waiting", label: "Waiting for the organizer's changes" },
-  DRAFT: { tone: "waiting", label: "Not submitted yet" },
-  PUBLISHED: { tone: "done", label: "Approved · no action needed" },
-  COMPLETED: { tone: "done", label: "Event has ended · no action needed" },
-  REJECTED: { tone: "done", label: "Rejected · no action needed" },
-  CANCELLED: { tone: "done", label: "Cancelled · no action needed" },
+  PENDING_REVIEW: { tone: "needs", label: "Waiting for your review" },
+  REVISION_REQUIRED: { tone: "waiting", label: "With the organizer · changes requested" },
+  DRAFT: { tone: "waiting", label: "With the organizer · not submitted yet" },
+  PUBLISHED: { tone: "done", label: "Reviewed · approved" },
+  COMPLETED: { tone: "done", label: "Reviewed · approved, event has ended" },
+  REJECTED: { tone: "done", label: "Reviewed · rejected" },
+  CANCELLED: { tone: "done", label: "Cancelled" },
 }
 
 const FILTERS = [
-  { id: "needs", label: "Needs approval" },
-  { id: "waiting", label: "Waiting for organizer" },
-  { id: "done", label: "No action needed" },
+  { id: "needs", label: "Waiting for review" },
+  { id: "waiting", label: "With the organizer" },
+  { id: "done", label: "Reviewed" },
   { id: "ALL", label: "All events" },
 ]
 
@@ -50,7 +53,7 @@ function lastReview(event) {
   return reviews[reviews.length - 1] ?? null
 }
 
-/* Every event with its review status: events that need a decision come first. */
+/* Event review: every event with its review status. Events waiting for a decision come first. */
 
 function Reviews({ onPendingCount }) {
   const [events, setEvents] = useState([])
@@ -103,9 +106,9 @@ function Reviews({ onPendingCount }) {
 
   return (
     <>
-      <StaffHeader eyebrow="Admin" title="Pending reviews">
+      <StaffHeader eyebrow="Admin" title="Event review">
         <p className="organizer-muted staff-header-note">
-          Every event and where it stands. Events that need your approval are listed first.
+          Approve, reject or ask for changes on submitted events, and see the review status of every event.
         </p>
       </StaffHeader>
 
@@ -113,12 +116,45 @@ function Reviews({ onPendingCount }) {
       {status === "error" && <p role="alert">We couldn&apos;t load the events. Please refresh.</p>}
 
       {status === "ready" && (
+        <section className="dashboard-cards" aria-label="Review summary. Choose a card to filter the list.">
+          <DashboardCard
+            label="Waiting for review"
+            value={counts.needs}
+            note={counts.needs > 0 ? "Need your decision" : "All caught up"}
+            active={shownFilter === "needs"}
+            onClick={() => setFilter("needs")}
+          />
+          <DashboardCard
+            label="With the organizer"
+            value={counts.waiting}
+            note="Drafts and changes requested"
+            active={shownFilter === "waiting"}
+            onClick={() => setFilter("waiting")}
+          />
+          <DashboardCard
+            label="Reviewed"
+            value={counts.done}
+            note="Approved, rejected or cancelled"
+            active={shownFilter === "done"}
+            onClick={() => setFilter("done")}
+          />
+          <DashboardCard
+            label="All events"
+            value={counts.ALL}
+            note="Show everything"
+            active={shownFilter === "ALL"}
+            onClick={() => setFilter("ALL")}
+          />
+        </section>
+      )}
+
+      {status === "ready" && (
         <section className="organizer-panel" aria-labelledby="reviews-title">
           <div className="organizer-panel__header organizer-panel__header--wrap">
             <h2 id="reviews-title">
               {counts.needs > 0
-                ? `${counts.needs} ${counts.needs === 1 ? "event needs" : "events need"} your approval`
-                : "All caught up"}
+                ? `${counts.needs} ${counts.needs === 1 ? "event is" : "events are"} waiting for your review`
+                : "No events are waiting for review"}
             </h2>
             <span className="organizer-muted">{events.length} events in total</span>
           </div>
@@ -152,7 +188,7 @@ function Reviews({ onPendingCount }) {
             <div className="organizer-empty">
               <p>
                 {shownFilter === "needs" && !query
-                  ? "Nothing needs your approval right now."
+                  ? "Nothing is waiting for your review right now."
                   : "No events match."}
               </p>
               <button
@@ -185,14 +221,18 @@ function Reviews({ onPendingCount }) {
                       <span className={`staff-review-state staff-review-state--${state.tone}`}>{state.label}</span>
                       {wait && <span className={`staff-wait${wait.long ? " staff-wait--long" : ""}`}> · {wait.text}</span>}
                       {!wait && review && (
-                        <span className="organizer-muted"> · reviewed {formatShortDate(review.reviewedAt)}</span>
+                        <span className="organizer-muted">
+                          {" "}
+                          · last decision: {DECISIONS[review.decision]?.label.toLowerCase()} by {review.reviewerName},{" "}
+                          {formatShortDate(review.reviewedAt)}
+                        </span>
                       )}
                     </div>
                     <a
                       className={`organizer-btn${state.tone === "needs" ? " organizer-btn--primary" : ""}`}
                       href={pageUrl("review-event", { id: event.id })}
                     >
-                      {state.tone === "needs" ? "Review now →" : "View details"}
+                      {state.tone === "needs" ? "Review now →" : "View review"}
                     </a>
                   </li>
                 )
