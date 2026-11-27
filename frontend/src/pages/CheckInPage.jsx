@@ -6,9 +6,12 @@ import { useToast } from "../hooks/useToast"
 import {
   canCheckIn,
   checkInByCode,
+  checkInById,
   listCheckInEvents,
   listRegistrations,
   normalizeCode,
+  summarize,
+  undoCheckIn,
 } from "../services/manageEventService"
 import { effectiveStatus, getOrganizerEvent } from "../services/organizerService"
 import { formatEventDate, STATUS_LABELS } from "../utils/format"
@@ -23,6 +26,23 @@ import "./StaffPages.css"
  * (Ticket.validate). A valid ticket is recorded with the arrival time (CheckIn.recordEntry)
  * and stops working, so it can't be used twice (Ticket.invalidate).
  */
+
+const LIST_FILTERS = [
+  { id: "ALL", label: "Everyone" },
+  { id: "WAITING", label: "Not arrived" },
+  { id: "IN", label: "Checked in" },
+]
+
+
+function initials(name) {
+  return name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+}
+
 
 function timeOf(iso) {
   return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Cairo" })
@@ -217,6 +237,8 @@ function CheckIn({ eventId }) {
   const [toast, setToast] = useToast()
   const [camera, setCamera] = useState(false)
   const [cameraError, setCameraError] = useState("")
+  const [listFilter, setListFilter] = useState("ALL")
+  const [query, setQuery] = useState("")
 
   const refresh = useCallback(async () => {
     setRegistrations(await listRegistrations(eventId))
@@ -276,6 +298,15 @@ function CheckIn({ eventId }) {
   const approved = useMemo(() => registrations.filter((row) => row.status === "APPROVED"), [registrations])
 
 
+  const attendees = useMemo(() => {
+    const words = query.trim().toLowerCase()
+    return approved
+      .filter((row) => (listFilter === "IN" ? row.checkedInAt : listFilter === "WAITING" ? !row.checkedInAt : true))
+      .filter((row) => !words || `${row.name} ${row.email} ${row.ticketCode}`.toLowerCase().includes(words))
+      .sort((a, b) =>
+        listFilter === "IN" ? b.checkedInAt.localeCompare(a.checkedInAt) : a.name.localeCompare(b.name)
+      )
+  }, [approved, listFilter, query])
 
 
   if (status === "loading") return <p role="status">Loading check-in…</p>
@@ -300,7 +331,27 @@ function CheckIn({ eventId }) {
   const shown = outcome ? describe(outcome) : null
   const waitingTicket = approved.find((row) => !row.checkedInAt)
   const usedTicket = approved.find((row) => row.checkedInAt)
+  const totals = summarize(registrations, event.capacity)
+  const percent = totals.approved > 0 ? Math.round((totals.checkedIn / totals.approved) * 100) : 0
+  const circle = 2 * Math.PI * 52
 
+  async function manual(row) {
+    setBusy(true)
+    try {
+      if (row.checkedInAt) {
+        await undoCheckIn(eventId, row.id)
+        setToast(`Check-in undone for ${row.name}.`)
+      } else {
+        const answer = await checkInById(eventId, row.id)
+        setOutcome(stamped(answer))
+      }
+      await refresh()
+    } catch (caught) {
+      setToast(caught.message)
+    } finally {
+      setBusy(false)
+    }
+  }
 
 
   return (
@@ -319,6 +370,25 @@ function CheckIn({ eventId }) {
           </a>
         </div>
       </StaffHeader>
+
+      <section className="organizer-panel staff-progress" aria-label="Check-in progress">
+        <div className="staff-ring" role="img" aria-label={`${percent}% checked in`}>
+          <svg viewBox="0 0 124 124" aria-hidden="true">
+            <circle cx="62" cy="62" r="52" />
+            <circle cx="62" cy="62" r="52" strokeDasharray={circle} strokeDashoffset={circle * (1 - percent / 100)} />
+          </svg>
+          <strong>{percent}%</strong>
+        </div>
+        <div>
+          <p className="organizer-panel__big" aria-live="polite">
+            {totals.checkedIn} <span>of {totals.approved} seats checked in</span>
+          </p>
+          <p className="organizer-muted">
+            {totals.approved - totals.checkedIn} still to arrive
+            {totals.pending > 0 && ` · ${totals.pending} awaiting approval can't enter yet`}
+          </p>
+        </div>
+      </section>
 
 
       <div className="staff-checkin">
@@ -427,6 +497,70 @@ function CheckIn({ eventId }) {
           </details>
         </section>
 
+        <section className="organizer-panel" aria-labelledby="attendees-title">
+          <div className="organizer-panel__header organizer-panel__header--wrap">
+            <h2 id="attendees-title">Guest list</h2>
+            <div className="segmented" role="group" aria-label="Filter the guest list">
+              {LIST_FILTERS.map((item) => (
+                <button key={item.id} type="button" aria-pressed={listFilter === item.id} onClick={() => setListFilter(item.id)}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="organizer-toolbar">
+            <label className="organizer-search">
+              <span className="visually-hidden">Search the guest list</span>
+              <input
+                type="search"
+                value={query}
+                placeholder="Search by name, email or code…"
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </label>
+          </div>
+
+          {attendees.length === 0 ? (
+            <div className="organizer-empty">
+              <p>
+                {approved.length === 0
+                  ? "Nobody is approved for this event yet."
+                  : listFilter === "IN" && !query
+                    ? "Nobody has checked in yet."
+                    : "No guests match."}
+              </p>
+            </div>
+          ) : (
+            <ul className="staff-attendees">
+              {attendees.map((row) => (
+                <li key={row.id} className={row.checkedInAt ? "is-in" : undefined}>
+                  <span className="staff-person">
+                    <span className="staff-person__avatar" aria-hidden="true">
+                      {initials(row.name)}
+                    </span>
+                    <span>
+                      <strong>{row.name}</strong>
+                      <span className="organizer-muted">
+                        {row.ticketCode} · {row.quantity} × {row.ticketName}
+                        {row.checkedInAt && ` · in at ${timeOf(row.checkedInAt)}`}
+                      </span>
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    className={`organizer-btn${row.checkedInAt ? "" : " organizer-btn--primary"}`}
+                    disabled={busy}
+                    aria-label={`${row.checkedInAt ? "Undo check-in for" : "Check in"} ${row.name}`}
+                    onClick={() => manual(row)}
+                  >
+                    {row.checkedInAt ? "Undo" : "Check in"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
 
       <Toast message={toast} onDismiss={() => setToast("")} />
