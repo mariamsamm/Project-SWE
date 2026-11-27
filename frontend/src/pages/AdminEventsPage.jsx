@@ -1,27 +1,16 @@
 import { useCallback, useEffect, useState } from "react"
 import AdminEventsPanel from "../Components/AdminEventsPanel"
-import ReasonModal from "../Components/ReasonModal"
 import StaffLayout, { StaffHeader } from "../Components/StaffLayout"
-import Toast from "../Components/Toast"
-import { useToast } from "../hooks/useToast"
-import { adminCancelEvent, getAdminSummary, MIN_FEEDBACK } from "../services/adminService"
+import { getAdminSummary } from "../services/adminService"
 import "./OrganizerPages.css"
 import "./StaffPages.css"
 
-const CANCEL_REASONS = [
-  "This event breaks the platform rules.",
-  "The venue reported a double booking.",
-  "The organizer asked us to take it down.",
-]
-
-/* The full list of events for the admin: search, filter, sort, view and cancel. */
+/* The full list of events for the admin: search, filter and sort.
+   To review or cancel an event, the admin uses the Event review page. */
 
 function AllEvents({ onPendingCount }) {
   const [summary, setSummary] = useState(null)
   const [status, setStatus] = useState("loading")
-  const [cancelling, setCancelling] = useState(null)
-  const [busy, setBusy] = useState(false)
-  const [toast, setToast] = useToast()
   // The dashboard cards link here with a filter, for example ?page=admin-events&status=PUBLISHED
   const [params] = useState(() => new URLSearchParams(window.location.search))
 
@@ -43,24 +32,12 @@ function AllEvents({ onPendingCount }) {
     start()
   }, [load])
 
-  async function confirmCancel(reason) {
-    setBusy(true)
-    try {
-      await adminCancelEvent(cancelling.id, reason)
-      await load()
-      setToast(`"${cancelling.title}" was cancelled.`)
-    } catch (caught) {
-      setToast(caught.message)
-    } finally {
-      setBusy(false)
-      setCancelling(null)
-    }
-  }
-
   return (
     <>
       <StaffHeader eyebrow="Admin" title="All events">
-        <p className="organizer-muted staff-header-note">Every event on the platform, whatever its status.</p>
+        <p className="organizer-muted staff-header-note">
+          Every event on the platform, whatever its status. To review or cancel one, use Event review.
+        </p>
       </StaffHeader>
 
       {status === "loading" && <p role="status">Loading events…</p>}
@@ -70,25 +47,8 @@ function AllEvents({ onPendingCount }) {
           events={summary.events}
           initialFilter={params.get("status") ?? "ALL"}
           initialSort={params.get("sort") ?? "soonest"}
-          onCancel={setCancelling}
         />
       )}
-
-      {cancelling && (
-        <ReasonModal
-          title={`Cancel "${cancelling.title}"?`}
-          message="The event is taken down and the organizer is told why. This can't be undone."
-          label="Reason shown to the organizer"
-          confirmLabel="Cancel event"
-          suggestions={CANCEL_REASONS}
-          minLength={MIN_FEEDBACK}
-          busy={busy}
-          onConfirm={confirmCancel}
-          onCancel={() => setCancelling(null)}
-        />
-      )}
-
-      <Toast message={toast} onDismiss={() => setToast("")} />
     </>
   )
 }
