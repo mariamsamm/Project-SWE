@@ -13,6 +13,7 @@ import AdminEventsPage from "./pages/AdminEventsPage"
 import AdminUsersPage from "./pages/AdminUsersPage"
 import AdminReviewsPage from "./pages/AdminReviewsPage"
 import ReviewEventPage from "./pages/ReviewEventPage"
+import CheckInPage from "./pages/CheckInPage"
 import { useEffect, useRef } from "react"
 
 function AccountDialog({ children, onClose, title }) {
@@ -74,6 +75,7 @@ function App() {
   else if (page === "admin-events") content = <AdminEventsPage />
   else if (page === "admin-users") content = <AdminUsersPage />
   else if (page === "admin-reviews") content = <AdminReviewsPage />
+  else if (page === "check-in") content = <CheckInPage eventId={params.get("id")} />
   else if (page === "review-event") content = <ReviewEventPage eventId={params.get("id")} />
   else if (page === "registrations") content = <MyRegistrationsPage />
   else if (page === "ticket") content = <MyTicketPage registrationId={params.get("id") ?? ""} />

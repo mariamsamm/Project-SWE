@@ -5,6 +5,7 @@ const ICONS = {
   dashboard: "M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z",
   events: "M5 6h14v14H5zM5 10h14M9 3v4M15 3v4",
   create: "M12 5v14M5 12h14",
+  checkin: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM18 14h2M14 18v2",
   logout: "M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10",
 }
 
@@ -20,6 +21,7 @@ const LINKS = [
   { id: "dashboard", label: "Dashboard", href: pageUrl("organizer") },
   { id: "events", label: "My events", href: `${pageUrl("organizer")}#my-events` },
   { id: "create", label: "Create event", href: pageUrl("create-event") },
+  { id: "checkin", label: "Check-in", href: pageUrl("check-in") },
 ]
 
 /** Side menu shared by every organizer page. `active` is the id of the current link. */
